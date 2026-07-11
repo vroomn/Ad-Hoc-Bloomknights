@@ -103,7 +103,22 @@ const pageNames = {
   "ingest-page": "Data Ingest",
   "valuation-page": "Valuation",
   "reports-page": "Reports",
+  "support-page": "Live Support",
   "settings-page": "Settings"
+};
+
+
+const suggestedQuestions = {
+  portfolio: [
+    "Review my portfolio risk",
+    "Explain my diversification score",
+    "What is my largest position?"
+  ],
+  general: [
+    "What is an ETF?",
+    "Explain compound growth",
+    "How does diversification reduce risk?"
+  ]
 };
 
 
@@ -837,6 +852,7 @@ async function sendChat() {
 
   addChatMessage("user", message);
   input.value = "";
+  byId("chat-suggestions").classList.add("hidden");
   const thinking = addChatMessage("thinking", "Thinking...");
   setLoading(sendButton, true, "...");
 
@@ -856,6 +872,28 @@ async function sendChat() {
 }
 
 
+function renderSuggestedPrompts() {
+  const container = byId("chat-suggestions");
+  container.replaceChildren();
+
+
+  suggestedQuestions[chatMode].forEach((question) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "suggestion-chip";
+    button.textContent = question;
+    button.addEventListener("click", () => {
+      byId("chat-input").value = question;
+      sendChat();
+    });
+    container.appendChild(button);
+  });
+
+
+  container.classList.remove("hidden");
+}
+
+
 function setChatMode(mode) {
   chatMode = mode === "general" ? "general" : "portfolio";
   document.querySelectorAll("[data-chat-mode]").forEach((button) => {
@@ -864,6 +902,7 @@ function setChatMode(mode) {
 
 
   const input = byId("chat-input");
+  renderSuggestedPrompts();
   if (chatMode === "general") {
     input.placeholder = "Ask a general finance question...";
     addChatMessage("ai", "General mode is on. Portfolio holdings will not be included.");
@@ -902,6 +941,9 @@ function showPage(pageId) {
     window.requestAnimationFrame(renderSectorChart);
   } else if (pageId === "reports-page") {
     renderReports(currentAnalysis);
+  } else if (pageId === "support-page") {
+    renderSupportRequest();
+    updateSupportCharacterCount();
   }
 }
 
@@ -942,12 +984,17 @@ function showDashboard() {
 
 
   if (!byId("chat-messages").children.length) {
-    addChatMessage("ai", "Hi! Ask me anything about your portfolio.");
+    addChatMessage("ai", "Hi, I'm Portfolio IQ Assistant. I can explain your portfolio or general finance concepts.");
   }
+
+
+  renderSuggestedPrompts();
 }
 
 
 function signOut() {
+  supportRequest = null;
+  renderSupportRequest();
   byId("dashboard").classList.add("hidden");
   byId("login-screen").classList.remove("hidden");
   byId("password").value = "";
@@ -1162,6 +1209,109 @@ function downloadSummaryReport() {
 }
 
 
+function updateSupportCharacterCount() {
+  const message = byId("support-message").value;
+  byId("support-character-count").textContent = `${message.length}/800`;
+}
+
+
+function renderSupportRequest() {
+  const summary = byId("support-request-summary");
+  if (!supportRequest) {
+    summary.classList.add("hidden");
+    return;
+  }
+
+
+  byId("support-summary-topic").textContent = supportRequest.topic;
+  byId("support-summary-time").textContent = new Date(supportRequest.createdAt).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+
+
+  const sharedItems = [];
+  if (supportRequest.sharePortfolio) {
+    sharedItems.push(`${supportRequest.holdingsCount} portfolio positions`);
+  }
+  if (supportRequest.shareChat) {
+    sharedItems.push(`${supportRequest.chatMessageCount} assistant messages`);
+  }
+
+
+  byId("support-share-summary").textContent = sharedItems.length
+    ? `Selected context: ${sharedItems.join(" and ")}.`
+    : "Only the written support request is included.";
+  summary.classList.remove("hidden");
+}
+
+
+async function prepareSupportRequest(event) {
+  event.preventDefault();
+  const form = byId("support-form");
+  const status = byId("support-form-status");
+  const button = byId("prepare-support-request");
+
+
+  if (!form.reportValidity()) {
+    status.textContent = "Complete the required fields and consent before continuing.";
+    status.className = "inline-status error";
+    return;
+  }
+
+
+  setLoading(button, true, "Preparing...");
+  status.textContent = "Preparing a secure handoff summary...";
+  status.className = "inline-status";
+
+
+  await wait(450);
+  supportRequest = {
+    topic: byId("support-topic").value,
+    message: byId("support-message").value.trim(),
+    sharePortfolio: byId("support-share-portfolio").checked,
+    shareChat: byId("support-share-chat").checked,
+    holdingsCount: currentHoldings.length,
+    chatMessageCount: chatHistory.length,
+    createdAt: new Date().toISOString()
+  };
+
+
+  renderSupportRequest();
+  status.textContent = "Draft saved locally. The live-agent backend is not connected yet.";
+  status.className = "inline-status success";
+  setLoading(button, false);
+  showToast("Live Support request draft prepared.");
+}
+
+
+function clearSupportDraft() {
+  supportRequest = null;
+  byId("support-form").reset();
+  byId("support-form-status").textContent = "Draft cleared.";
+  byId("support-form-status").className = "inline-status";
+  updateSupportCharacterCount();
+  renderSupportRequest();
+}
+
+
+function prefillSupportFromChat() {
+  const message = byId("support-message");
+  if (message.value.trim()) {
+    return;
+  }
+
+
+  const latestQuestion = [...chatHistory].reverse().find((entry) => entry.role === "user");
+  if (latestQuestion) {
+    message.value = `I need help with this question: ${latestQuestion.text}`;
+    updateSupportCharacterCount();
+  }
+}
+
+
 function initializeEvents() {
   byId("login-form").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1176,6 +1326,7 @@ function initializeEvents() {
 
   byId("profile-shortcut").addEventListener("click", () => showPage("settings-page"));
   byId("sign-out").addEventListener("click", signOut);
+  byId("open-live-support").addEventListener("click", prefillSupportFromChat);
 
 
   byId("chat-send").addEventListener("click", sendChat);
@@ -1243,6 +1394,11 @@ function initializeEvents() {
   byId("print-report").addEventListener("click", () => window.print());
 
 
+  byId("support-form").addEventListener("submit", prepareSupportRequest);
+  byId("support-message").addEventListener("input", updateSupportCharacterCount);
+  byId("clear-support-draft").addEventListener("click", clearSupportDraft);
+
+
   byId("settings-form").addEventListener("submit", (event) => {
     event.preventDefault();
     displayName = byId("display-name").value.trim() || "Kevin";
@@ -1255,8 +1411,14 @@ function initializeEvents() {
 
 function initializeApp() {
   initializeEvents();
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
   byId("api-status").textContent = USE_MOCKS ? "Mock mode" : "Django connected";
   byId("share-portfolio").checked = sharePortfolio;
+  renderSuggestedPrompts();
+  renderSupportRequest();
+  updateSupportCharacterCount();
   updateUserDisplay();
   byId("email").focus();
 }

@@ -12,7 +12,7 @@
   <section id="login-screen" aria-labelledby="login-title">
     <div class="login-card">
       <div class="login-brand">
-        <span class="brand-mark" aria-hidden="true">&#128202;</span>
+        <span class="brand-mark" aria-hidden="true"><i data-lucide="chart-line"></i></span>
         <span>Portfolio IQ</span>
       </div>
 
@@ -47,27 +47,30 @@
 
   <div id="dashboard" class="hidden">
     <aside class="sidebar" aria-label="Primary navigation">
-      <div class="logo"><span aria-hidden="true">&#128202;</span> Portfolio IQ</div>
+      <div class="logo"><i data-lucide="chart-line" aria-hidden="true"></i> Portfolio IQ</div>
 
 
       <nav>
         <button class="nav-item active" type="button" data-page="dashboard-page">
-          <span aria-hidden="true">&#127968;</span> Dashboard
+          <i data-lucide="layout-dashboard" aria-hidden="true"></i> Dashboard
         </button>
         <button class="nav-item" type="button" data-page="ingest-page">
-          <span aria-hidden="true">&#128229;</span> Data Ingest
+          <i data-lucide="upload" aria-hidden="true"></i> Data Ingest
         </button>
         <button class="nav-item" type="button" data-page="valuation-page">
-          <span aria-hidden="true">&#128200;</span> Valuation
+          <i data-lucide="chart-pie" aria-hidden="true"></i> Valuation
         </button>
         <button class="nav-item" type="button" data-page="reports-page">
-          <span aria-hidden="true">&#128203;</span> Reports
+          <i data-lucide="file-text" aria-hidden="true"></i> Reports
+        </button>
+        <button class="nav-item" type="button" data-page="support-page">
+          <i data-lucide="headphones" aria-hidden="true"></i> Live Support
         </button>
       </nav>
 
 
       <button class="nav-item settings-item" type="button" data-page="settings-page">
-        <span aria-hidden="true">&#9881;</span> Settings
+        <i data-lucide="settings" aria-hidden="true"></i> Settings
       </button>
     </aside>
 
@@ -102,7 +105,7 @@
 
 
             <div class="panel chart-panel">
-              <h3>Graphs of Data</h3>
+              <h3>Portfolio Performance</h3>
               <div class="chart-frame">
                 <canvas id="history-chart" aria-label="Portfolio value history chart"></canvas>
               </div>
@@ -151,7 +154,7 @@
                 accept=".csv,.xls,.xlsx,.png,.jpg,.jpeg,.webp"
               />
               <div id="drop-zone" class="drop-zone" role="button" tabindex="0">
-                <span class="upload-icon" aria-hidden="true">&#8679;</span>
+                <span class="upload-icon" aria-hidden="true"><i data-lucide="upload"></i></span>
                 <strong>Drop your portfolio file here</strong>
                 <span>CSV, Excel, PNG, JPG, or WebP</span>
                 <button id="choose-file" class="secondary-btn" type="button">Choose File</button>
@@ -239,7 +242,7 @@
                   </div>
                 </div>
                 <div class="panel observations-panel">
-                  <h3>AI Observations</h3>
+                  <h3>Portfolio Insights</h3>
                   <ul id="observations-list" class="observation-list"></ul>
                 </div>
               </div>
@@ -296,6 +299,137 @@
           </section>
 
 
+          <section id="support-page" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <h2>Live Support</h2>
+                <p>Prepare a secure handoff to a Portfolio IQ support specialist.</p>
+              </div>
+              <span class="status-badge service-preview">Preview mode</span>
+            </div>
+
+
+            <div class="support-intro">
+              <div class="support-person" aria-hidden="true"><i data-lucide="headphones"></i></div>
+              <div class="support-intro-copy">
+                <span class="support-kicker">Human support</span>
+                <h3>Get help from a real person</h3>
+                <p>Choose a topic, describe the issue, and decide exactly what information can be shared.</p>
+              </div>
+              <div class="service-state" id="agent-service-state">
+                <span aria-hidden="true"></span>
+                Not connected yet
+              </div>
+            </div>
+
+
+            <div class="support-grid">
+              <form id="support-form" class="panel support-form">
+                <h3>Start a Support Request</h3>
+
+
+                <label class="field-label" for="support-topic">What do you need help with?</label>
+                <select id="support-topic" required>
+                  <option value="" selected disabled>Choose a support topic</option>
+                  <option value="Portfolio import">Portfolio import</option>
+                  <option value="Analysis or report">Analysis or report</option>
+                  <option value="AI assistant">AI assistant</option>
+                  <option value="Account access">Account access</option>
+                  <option value="Technical issue">Technical issue</option>
+                  <option value="Other">Other</option>
+                </select>
+
+
+                <label class="field-label" for="support-message">Describe the issue</label>
+                <textarea
+                  id="support-message"
+                  rows="6"
+                  maxlength="800"
+                  placeholder="Tell the specialist what happened and what you were trying to do."
+                  required
+                ></textarea>
+                <div class="field-meta"><span>Do not include passwords or account credentials.</span><span id="support-character-count">0/800</span></div>
+
+
+                <fieldset class="support-consent-group">
+                  <legend>Information to include</legend>
+                  <p>Your request message is always included. The items below are optional.</p>
+
+
+                  <label class="consent-row" for="support-share-portfolio">
+                    <input id="support-share-portfolio" type="checkbox" checked />
+                    <span>
+                      <strong>Portfolio summary</strong>
+                      <small>Holdings, value, diversification, and risk level.</small>
+                    </span>
+                  </label>
+
+
+                  <label class="consent-row" for="support-share-chat">
+                    <input id="support-share-chat" type="checkbox" />
+                    <span>
+                      <strong>Assistant conversation</strong>
+                      <small>Your current Portfolio IQ Assistant message history.</small>
+                    </span>
+                  </label>
+                </fieldset>
+
+
+                <label class="consent-row required-consent" for="support-consent">
+                  <input id="support-consent" type="checkbox" required />
+                  <span>
+                    <strong>I consent to this support handoff</strong>
+                    <small>A specialist may review the request and any information selected above.</small>
+                  </span>
+                </label>
+
+
+                <button id="prepare-support-request" class="primary-btn" type="submit">Prepare Live Support Request</button>
+                <p id="support-form-status" class="inline-status" role="status" aria-live="polite"></p>
+              </form>
+
+
+              <aside class="panel support-details" aria-label="Live support information">
+                <h3>Secure Support</h3>
+
+
+                <div class="support-security-warning">
+                  <strong>Keep credentials private</strong>
+                  <p>A Portfolio IQ specialist will never ask for your password, PIN, two-factor code, bank login, Social Security number, or full card number.</p>
+                </div>
+
+
+                <div class="support-help-list">
+                  <h4>Specialists can help with</h4>
+                  <ul>
+                    <li>Portfolio imports and missing data</li>
+                    <li>Understanding product features and reports</li>
+                    <li>Account access and technical problems</li>
+                    <li>Escalating unresolved product issues</li>
+                  </ul>
+                </div>
+
+
+                <div id="support-request-summary" class="request-summary hidden">
+                  <div class="request-summary-heading">
+                    <h4>Saved Request</h4>
+                    <span>Local draft</span>
+                  </div>
+                  <dl>
+                    <div><dt>Topic</dt><dd id="support-summary-topic">--</dd></div>
+                    <div><dt>Created</dt><dd id="support-summary-time">--</dd></div>
+                  </dl>
+                  <p id="support-share-summary"></p>
+                  <button id="clear-support-draft" class="secondary-btn" type="button">Clear Draft</button>
+                </div>
+
+
+                <p class="support-boundary">Support specialists can explain Portfolio IQ and troubleshoot the service, but they do not provide personalized investment advice.</p>
+              </aside>
+            </div>
+          </section>
+
+
           <section id="settings-page" class="page hidden">
             <div class="page-heading">
               <div>
@@ -314,7 +448,7 @@
               <label class="checkbox-row" for="share-portfolio">
                 <input id="share-portfolio" type="checkbox" checked />
                 <span>
-                  <strong>Share portfolio context with the AI chat</strong>
+                  <strong>Share portfolio context with Portfolio IQ Assistant</strong>
                   <small>Turn this off to ask general finance questions without sending holdings.</small>
                 </span>
               </label>
@@ -344,14 +478,28 @@
         </main>
 
 
-        <aside class="chat-panel" aria-label="Financial assistant">
-          <div class="chat-header"><span aria-hidden="true">&#10024;</span> Chat Box</div>
+        <aside class="chat-panel" aria-label="Portfolio IQ Assistant">
+          <div class="chat-header">
+            <div class="assistant-identity">
+              <span class="assistant-mark" aria-hidden="true">IQ</span>
+              <span>
+                <strong>Portfolio IQ Assistant</strong>
+                <small>AI-powered guidance</small>
+              </span>
+            </div>
+            <span class="assistant-badge">AI</span>
+          </div>
           <div class="chat-mode-tabs" role="group" aria-label="Chat mode">
-            <button class="chat-mode active" type="button" data-chat-mode="portfolio">Portfolio</button>
+            <button class="chat-mode active" type="button" data-chat-mode="portfolio">My Portfolio</button>
             <button class="chat-mode" type="button" data-chat-mode="general">General</button>
           </div>
+          <div id="chat-suggestions" class="chat-suggestions" aria-label="Suggested questions"></div>
           <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
-          <p class="chat-disclaimer">Educational information only, not financial advice.</p>
+          <div class="chat-handoff">
+            <span>Need help from a person?</span>
+            <button id="open-live-support" type="button" data-page="support-page">Live Support</button>
+          </div>
+          <p class="chat-disclaimer">AI responses may be inaccurate. Educational information only, not financial advice.</p>
           <div class="chat-input-row">
             <label class="sr-only" for="chat-input">Ask the financial assistant</label>
             <input id="chat-input" type="text" placeholder="Ask about your portfolio..." autocomplete="off" />
@@ -366,6 +514,7 @@
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
 
+  <script src="https://unpkg.com/lucide@1.23.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
