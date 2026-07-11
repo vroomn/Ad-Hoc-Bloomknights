@@ -3,8 +3,8 @@ services:
     build:
       context: .
     ports:
-      - 8000:8000
+      - 5000:5000
     volumes:
-      - test-backend-volume:/app/backend/database
+      - db-volume:/app/instance
 volumes:
-  test-backend-volume:
+  db-volume:

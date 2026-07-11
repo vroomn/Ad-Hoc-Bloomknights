@@ -1,4 +1,5 @@
-**/.venv
+.venv/
+instance/
 .env
-.gitignore
-backend/database/*.sqlite3
+.git
+__pycache__/
