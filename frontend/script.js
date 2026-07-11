@@ -52,20 +52,34 @@ function initDashboard() {
     tbody.appendChild(row);
   });
 
-  new Chart(document.getElementById("history-chart"), {
+  const ctx = document.getElementById("history-chart").getContext("2d");
+  const grad = ctx.createLinearGradient(0, 0, 0, 260);
+  grad.addColorStop(0, "rgba(0, 200, 5, 0.25)");
+  grad.addColorStop(1, "rgba(0, 200, 5, 0)");
+
+  new Chart(ctx, {
     type: "line",
     data: {
       labels: mockHistory.map((p) => p.month),
       datasets: [{
         label: "Portfolio Value",
         data: mockHistory.map((p) => p.value),
-        borderColor: "#2563eb",
+        borderColor: "#00C805",
+        backgroundColor: grad,
+        fill: true,
         borderWidth: 2.5,
         pointRadius: 0,
-        tension: 0.3,
+        pointHoverRadius: 5,
+        tension: 0.35,
       }],
     },
-    options: { plugins: { legend: { display: false } } },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#8b949e" } },
+        y: { grid: { color: "rgba(139,148,158,0.12)" }, ticks: { color: "#8b949e", callback: (v) => "$" + v.toLocaleString() } },
+      },
+    },
   });
 
   addChatMessage("ai", "Hi! Ask me anything about your portfolio.");
