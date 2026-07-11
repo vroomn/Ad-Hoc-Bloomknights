@@ -24,7 +24,6 @@ from ai_api import views
 router = routers.DefaultRouter()
 # Defines routes used by django-rest-framework
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/echo/', QueryView.as_view(), name='echo'),
