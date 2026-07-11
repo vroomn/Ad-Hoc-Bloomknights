@@ -1,8 +1,10 @@
 "use strict";
 
+
 // Keep mock mode enabled until the Django API contract is finalized.
 const USE_MOCKS = true;
 const API = "http://localhost:8000";
+
 
 const mockHoldings = [
   {
@@ -47,6 +49,7 @@ const mockHoldings = [
   }
 ];
 
+
 const mockAnalysis = {
   totalValue: 9080.75,
   ytdGrowthPercent: 29.7,
@@ -80,6 +83,7 @@ const mockAnalysis = {
   concentrationWarning: "Technology represents nearly half of the portfolio, which may increase sector concentration risk."
 };
 
+
 let currentHoldings = cloneHoldings(mockHoldings);
 let currentAnalysis = cloneAnalysis(mockAnalysis);
 let chatHistory = [];
@@ -92,6 +96,7 @@ let toastTimer = null;
 let displayName = "Kevin";
 let sharePortfolio = true;
 
+
 const allowedExtensions = ["csv", "xls", "xlsx", "png", "jpg", "jpeg", "webp"];
 const pageNames = {
   "dashboard-page": "Dashboard",
@@ -101,13 +106,16 @@ const pageNames = {
   "settings-page": "Settings"
 };
 
+
 function byId(id) {
   return document.getElementById(id);
 }
 
+
 function cloneHoldings(holdings) {
   return holdings.map((holding) => ({ ...holding }));
 }
+
 
 function cloneAnalysis(analysis) {
   return {
@@ -124,15 +132,18 @@ function cloneAnalysis(analysis) {
   };
 }
 
+
 function wait(milliseconds) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
+
 
 function firstNumber(...values) {
   for (const value of values) {
     if (value === null || value === undefined || value === "") {
       continue;
     }
+
 
     const number = Number(value);
     if (Number.isFinite(number)) {
@@ -142,44 +153,54 @@ function firstNumber(...values) {
   return null;
 }
 
+
 function holdingTicker(holding) {
   return String(holding.ticker ?? holding.symbol ?? "Unknown");
 }
+
 
 function holdingName(holding) {
   return String(holding.name ?? holding.companyName ?? holding.company ?? "Not provided");
 }
 
+
 function holdingShares(holding) {
   return firstNumber(holding.shares, holding.quantity, holding.units) ?? 0;
 }
 
+
 function holdingPrice(holding) {
   return firstNumber(holding.currentPrice, holding.price, holding.marketPrice) ?? 0;
 }
+
 
 function holdingValue(holding) {
   const explicitValue = firstNumber(holding.totalValue, holding.value, holding.marketValue);
   return explicitValue ?? holdingShares(holding) * holdingPrice(holding);
 }
 
+
 function holdingGain(holding) {
   return firstNumber(holding.gainLoss, holding.gain, holding.profitLoss) ?? 0;
 }
 
+
 function holdingGainPercent(holding) {
   return firstNumber(holding.gainLossPercent, holding.gainPercent, holding.returnPercent) ?? 0;
 }
+
 
 function formatCurrency(value) {
   if (value === null || value === undefined || value === "") {
     return "--";
   }
 
+
   const number = Number(value);
   if (!Number.isFinite(number)) {
     return "--";
   }
+
 
   return number.toLocaleString("en-US", {
     style: "currency",
@@ -187,36 +208,44 @@ function formatCurrency(value) {
   });
 }
 
+
 function formatPercent(value) {
   if (value === null || value === undefined || value === "") {
     return "--";
   }
+
 
   const number = Number(value);
   if (!Number.isFinite(number)) {
     return "--";
   }
 
+
   const prefix = number > 0 ? "+" : "";
   return `${prefix}${number.toFixed(1)}%`;
 }
+
 
 function formatFileSize(bytes) {
   if (!Number.isFinite(bytes) || bytes <= 0) {
     return "File selected";
   }
 
+
   if (bytes < 1024 * 1024) {
     return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   }
 
+
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
 
 function setLoading(element, loading, loadingText = "Working...") {
   if (!element) {
     return;
   }
+
 
   if (loading) {
     element.dataset.originalLabel = element.textContent;
@@ -231,6 +260,7 @@ function setLoading(element, loading, loadingText = "Working...") {
   }
 }
 
+
 function showToast(message, type = "success") {
   const toast = byId("toast");
   window.clearTimeout(toastTimer);
@@ -238,14 +268,17 @@ function showToast(message, type = "success") {
   toast.classList.toggle("error", type === "error");
   toast.classList.remove("hidden");
 
+
   toastTimer = window.setTimeout(() => {
     toast.classList.add("hidden");
   }, 3500);
 }
 
+
 function showError(message) {
   showToast(message || "Something went wrong. Please try again.", "error");
 }
+
 
 function appendCell(row, text, className = "") {
   const cell = document.createElement("td");
@@ -257,6 +290,7 @@ function appendCell(row, text, className = "") {
   return cell;
 }
 
+
 function appendEmptyRow(tbody, columnCount, message) {
   const row = document.createElement("tr");
   row.className = "empty-row";
@@ -267,6 +301,7 @@ function appendEmptyRow(tbody, columnCount, message) {
   tbody.appendChild(row);
 }
 
+
 function renderHoldings(holdings) {
   const tbody = document.querySelector("#holdings-table tbody");
   tbody.replaceChildren();
@@ -274,10 +309,12 @@ function renderHoldings(holdings) {
     ? `${holdings.length} positions`
     : "No positions";
 
+
   if (!holdings.length) {
     appendEmptyRow(tbody, 6, "Import a portfolio to see your holdings.");
     return;
   }
+
 
   holdings.forEach((holding) => {
     const row = document.createElement("tr");
@@ -286,10 +323,12 @@ function renderHoldings(holdings) {
     const gainClass = gain >= 0 ? "gain" : "loss";
     const arrow = gain >= 0 ? "\u25B2" : "\u25BC";
 
+
     const tickerCell = appendCell(row, holdingTicker(holding));
     const tickerStrong = document.createElement("strong");
     tickerStrong.textContent = tickerCell.textContent;
     tickerCell.replaceChildren(tickerStrong);
+
 
     appendCell(row, holdingName(holding));
     appendCell(row, String(holdingShares(holding)));
@@ -304,15 +343,18 @@ function renderHoldings(holdings) {
   });
 }
 
+
 function renderIngestHoldings(holdings) {
   const results = byId("ingest-results");
   const tbody = document.querySelector("#ingest-table tbody");
   tbody.replaceChildren();
 
+
   if (!holdings.length) {
     results.classList.add("hidden");
     return;
   }
+
 
   byId("ingest-count").textContent = `${holdings.length} holdings found`;
   holdings.forEach((holding) => {
@@ -326,13 +368,16 @@ function renderIngestHoldings(holdings) {
   results.classList.remove("hidden");
 }
 
+
 function analysisNumber(analysis, ...keys) {
   if (!analysis) {
     return null;
   }
 
+
   return firstNumber(...keys.map((key) => analysis[key]));
 }
+
 
 function setGrowthMetric(element, value) {
   const number = firstNumber(value);
@@ -341,9 +386,11 @@ function setGrowthMetric(element, value) {
   element.classList.toggle("loss", number !== null && number < 0);
 }
 
+
 function getHistory(analysis) {
   return Array.isArray(analysis?.history) ? analysis.history : [];
 }
+
 
 function normalizeSectorBreakdown(breakdown) {
   if (Array.isArray(breakdown)) {
@@ -355,19 +402,23 @@ function normalizeSectorBreakdown(breakdown) {
       .filter((item) => item.value > 0);
   }
 
+
   if (breakdown && typeof breakdown === "object") {
     return Object.entries(breakdown)
       .map(([label, value]) => ({ label, value: Number(value) }))
       .filter((item) => Number.isFinite(item.value) && item.value > 0);
   }
 
+
   return [];
 }
+
 
 function largestPosition() {
   if (!currentHoldings.length) {
     return "--";
   }
+
 
   const total = currentHoldings.reduce((sum, holding) => sum + holdingValue(holding), 0);
   const largest = currentHoldings.reduce((current, holding) =>
@@ -376,6 +427,7 @@ function largestPosition() {
   const percentage = total > 0 ? (holdingValue(largest) / total) * 100 : 0;
   return `${holdingTicker(largest)} ${percentage.toFixed(1)}%`;
 }
+
 
 function renderAnalysis(analysis) {
   const hasPortfolio = Boolean(analysis && currentHoldings.length);
@@ -389,14 +441,17 @@ function renderAnalysis(analysis) {
     ? analysisNumber(analysis, "overallGrowthPercent", "growth", "totalGrowthPercent")
     : null;
 
+
   byId("metric-total").textContent = hasPortfolio ? formatCurrency(totalValue) : "--";
   setGrowthMetric(byId("metric-ytd"), hasPortfolio ? ytdGrowth : null);
   setGrowthMetric(byId("metric-overall"), hasPortfolio ? overallGrowth : null);
+
 
   byId("valuation-empty").classList.toggle("hidden", hasPortfolio);
   byId("valuation-content").classList.toggle("hidden", !hasPortfolio);
   byId("reports-empty").classList.toggle("hidden", hasPortfolio);
   byId("reports-content").classList.toggle("hidden", !hasPortfolio);
+
 
   if (!hasPortfolio) {
     destroyCharts();
@@ -404,16 +459,19 @@ function renderAnalysis(analysis) {
     return;
   }
 
+
   const diversification = analysisNumber(analysis, "diversificationScore");
   const riskLevel = String(analysis.riskLevel ?? "Not available");
   const observations = Array.isArray(analysis.observations) ? analysis.observations : [];
   const warning = String(analysis.concentrationWarning ?? "No major concentration warning was returned.");
+
 
   byId("diversification-score").textContent = Number.isFinite(diversification)
     ? `${Math.round(diversification)}/100`
     : "--";
   byId("risk-level").textContent = riskLevel;
   byId("largest-position").textContent = largestPosition();
+
 
   const observationsList = byId("observations-list");
   observationsList.replaceChildren();
@@ -429,44 +487,45 @@ function renderAnalysis(analysis) {
     observationsList.appendChild(item);
   }
 
+
   const warningPanel = byId("concentration-warning");
   warningPanel.textContent = warning;
   warningPanel.classList.toggle("good", !analysis.concentrationWarning);
 
+
   renderReports(analysis);
+
 
   if (!byId("dashboard-page").classList.contains("hidden")) {
     renderHistoryChart();
   }
+
 
   if (!byId("valuation-page").classList.contains("hidden")) {
     window.requestAnimationFrame(renderSectorChart);
   }
 }
 
+
 function renderHistoryChart() {
   if (!window.Chart || !currentAnalysis || !currentHoldings.length) {
     return;
   }
+
 
   if (historyChart) {
     historyChart.destroy();
     historyChart = null;
   }
 
+
   const history = getHistory(currentAnalysis);
   if (!history.length) {
     return;
   }
 
+
   historyChart = new Chart(byId("history-chart"), {
-
-  const ctx = document.getElementById("history-chart").getContext("2d");
-  const grad = ctx.createLinearGradient(0, 0, 0, 260);
-  grad.addColorStop(0, "rgba(0, 200, 5, 0.25)");
-  grad.addColorStop(1, "rgba(0, 200, 5, 0)");
-
-  new Chart(ctx, {
     type: "line",
     data: {
       labels: history.map((point) => point.month ?? point.date ?? point.label ?? ""),
@@ -482,18 +541,6 @@ function renderHistoryChart() {
           fill: false
         }
       ]
-      labels: mockHistory.map((p) => p.month),
-      datasets: [{
-        label: "Portfolio Value",
-        data: mockHistory.map((p) => p.value),
-        borderColor: "#00C805",
-        backgroundColor: grad,
-        fill: true,
-        borderWidth: 2.5,
-        pointRadius: 0,
-        pointHoverRadius: 5,
-        tension: 0.35,
-      }],
     },
     options: {
       responsive: true,
@@ -531,20 +578,24 @@ function renderHistoryChart() {
   });
 }
 
+
 function renderSectorChart() {
   if (!window.Chart || !currentAnalysis || !currentHoldings.length) {
     return;
   }
+
 
   if (sectorChart) {
     sectorChart.destroy();
     sectorChart = null;
   }
 
+
   const sectors = normalizeSectorBreakdown(currentAnalysis.sectorBreakdown);
   if (!sectors.length) {
     return;
   }
+
 
   sectorChart = new Chart(byId("sector-chart"), {
     type: "doughnut",
@@ -586,17 +637,20 @@ function renderSectorChart() {
   });
 }
 
+
 function destroyCharts() {
   if (historyChart) {
     historyChart.destroy();
     historyChart = null;
   }
 
+
   if (sectorChart) {
     sectorChart.destroy();
     sectorChart = null;
   }
 }
+
 
 function renderReports(analysis) {
   if (!analysis || !currentHoldings.length) {
@@ -607,6 +661,7 @@ function renderReports(analysis) {
     byId("report-notes").replaceChildren();
     return;
   }
+
 
   const total = analysisNumber(analysis, "totalValue", "portfolioValue", "value");
   const diversification = analysisNumber(analysis, "diversificationScore");
@@ -623,6 +678,7 @@ function renderReports(analysis) {
     minute: "2-digit"
   })}`;
 
+
   const notes = byId("report-notes");
   notes.replaceChildren();
   const observations = Array.isArray(analysis.observations) ? analysis.observations : [];
@@ -632,21 +688,7 @@ function renderReports(analysis) {
     notes.appendChild(item);
   });
 }
-    options: {
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: "#8b949e" } },
-        y: { grid: { color: "rgba(139,148,158,0.12)" }, ticks: { color: "#8b949e", callback: (v) => "$" + v.toLocaleString() } },
-      },
-    },
-  });
 
-  addChatMessage("ai", "Hi! Ask me anything about your portfolio.");
-}
-
-// ===== CHAT =====
-const chatMessages = document.getElementById("chat-messages");
-const chatInput = document.getElementById("chat-input");
 
 function addChatMessage(role, text) {
   const message = document.createElement("div");
@@ -655,12 +697,15 @@ function addChatMessage(role, text) {
   byId("chat-messages").appendChild(message);
   byId("chat-messages").scrollTop = byId("chat-messages").scrollHeight;
 
+
   if (role === "user" || role === "ai") {
     chatHistory.push({ role, text: String(text) });
   }
 
+
   return message;
 }
+
 
 async function readJsonResponse(response) {
   let data = {};
@@ -670,18 +715,22 @@ async function readJsonResponse(response) {
     data = {};
   }
 
+
   if (!response.ok) {
     throw new Error(data.error || `Request failed with status ${response.status}.`);
   }
 
+
   return data;
 }
+
 
 async function extractHoldings(file) {
   if (USE_MOCKS) {
     await wait(700);
     return cloneHoldings(mockHoldings);
   }
+
 
   const formData = new FormData();
   formData.append("file", file);
@@ -693,11 +742,13 @@ async function extractHoldings(file) {
   return Array.isArray(data.holdings) ? data.holdings : [];
 }
 
+
 async function analyzePortfolio(holdings) {
   if (USE_MOCKS) {
     await wait(650);
     return cloneAnalysis(mockAnalysis);
   }
+
 
   const response = await fetch(`${API}/analyze/`, {
     method: "POST",
@@ -707,11 +758,13 @@ async function analyzePortfolio(holdings) {
   return readJsonResponse(response);
 }
 
+
 async function askAssistant(message, holdings) {
   if (USE_MOCKS) {
     await wait(750);
     return mockAssistantReply(message, holdings);
   }
+
 
   const response = await fetch(`${API}/chat/`, {
     method: "POST",
@@ -722,57 +775,71 @@ async function askAssistant(message, holdings) {
   return data.reply || "The assistant returned an empty response.";
 }
 
+
 function mockAssistantReply(message, holdings) {
   const question = message.toLowerCase();
+
 
   if (chatMode === "general") {
     if (question.includes("compound")) {
       return "Compound growth means returns can earn additional returns over time. The result depends on the rate, time period, fees, and whether earnings are reinvested.";
     }
 
+
     if (question.includes("etf")) {
       return "An ETF is a fund that trades like a stock and can hold many investments. ETFs may offer diversification, but costs, strategy, and risk still vary by fund.";
     }
 
+
     return "I can explain financial concepts, investing terms, budgeting, and risk for educational purposes. I cannot guarantee outcomes or provide personalized financial advice.";
   }
+
 
   if (!holdings.length) {
     return "There is no portfolio connected to this chat. Import one from Data Ingest or switch to General mode.";
   }
 
+
   if (question.includes("risk")) {
     return "This sample portfolio has moderate risk. Its main concern is that technology makes up nearly half of the value, so a technology-sector decline could affect several positions together.";
   }
+
 
   if (question.includes("divers")) {
     return "The sample diversification score is 72 out of 100. VOO adds broad-market exposure, while AAPL and NVDA create a meaningful technology concentration.";
   }
 
+
   if (question.includes("loss") || question.includes("losing")) {
     return "TSLA is the only position showing a loss in the current sample, down $206.25 or 15.87%. That observation is based only on the data displayed here.";
   }
+
 
   if (question.includes("largest") || question.includes("biggest")) {
     return `The largest position is ${largestPosition()}. Position size is one useful way to review concentration, but it does not determine whether an investment is suitable.`;
   }
 
+
   return "Based on the displayed holdings, AAPL and NVDA have driven much of the gain, VOO is the largest position, and TSLA is the only position currently showing a loss.";
 }
+
 
 async function sendChat() {
   const input = byId("chat-input");
   const sendButton = byId("chat-send");
   const message = input.value.trim();
 
+
   if (!message || sendButton.disabled) {
     return;
   }
+
 
   addChatMessage("user", message);
   input.value = "";
   const thinking = addChatMessage("thinking", "Thinking...");
   setLoading(sendButton, true, "...");
+
 
   try {
     const holdings = chatMode === "portfolio" && sharePortfolio ? currentHoldings : [];
@@ -788,11 +855,13 @@ async function sendChat() {
   }
 }
 
+
 function setChatMode(mode) {
   chatMode = mode === "general" ? "general" : "portfolio";
   document.querySelectorAll("[data-chat-mode]").forEach((button) => {
     button.classList.toggle("active", button.dataset.chatMode === chatMode);
   });
+
 
   const input = byId("chat-input");
   if (chatMode === "general") {
@@ -806,21 +875,26 @@ function setChatMode(mode) {
   }
 }
 
+
 function showPage(pageId) {
   const target = byId(pageId);
   if (!target) {
     return;
   }
 
+
   document.querySelectorAll(".page").forEach((page) => {
     page.classList.toggle("hidden", page.id !== pageId);
   });
+
 
   document.querySelectorAll(".sidebar .nav-item").forEach((item) => {
     item.classList.toggle("active", item.dataset.page === pageId);
   });
 
+
   byId("page-label").textContent = pageNames[pageId] || "Portfolio IQ";
+
 
   if (pageId === "dashboard-page") {
     window.requestAnimationFrame(renderHistoryChart);
@@ -831,6 +905,7 @@ function showPage(pageId) {
   }
 }
 
+
 function updateUserDisplay() {
   const safeName = displayName.trim() || "Kevin";
   byId("user-name").textContent = safeName;
@@ -838,11 +913,13 @@ function updateUserDisplay() {
   byId("display-name").value = safeName;
 }
 
+
 function nameFromEmail(email) {
   const localPart = email.trim().split("@")[0];
   if (!localPart) {
     return "Kevin";
   }
+
 
   return localPart
     .replace(/[._-]+/g, " ")
@@ -851,6 +928,7 @@ function nameFromEmail(email) {
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ") || "Kevin";
 }
+
 
 function showDashboard() {
   displayName = nameFromEmail(byId("email").value);
@@ -862,10 +940,12 @@ function showDashboard() {
   renderAnalysis(currentAnalysis);
   showPage("dashboard-page");
 
+
   if (!byId("chat-messages").children.length) {
     addChatMessage("ai", "Hi! Ask me anything about your portfolio.");
   }
 }
+
 
 function signOut() {
   byId("dashboard").classList.add("hidden");
@@ -874,21 +954,26 @@ function signOut() {
   byId("email").focus();
 }
 
+
 function validateFile(file) {
   if (!file) {
     return "Choose a portfolio file first.";
   }
 
+
   const extension = file.name.includes(".")
     ? file.name.split(".").pop().toLowerCase()
     : "";
+
 
   if (!allowedExtensions.includes(extension)) {
     return "Use a CSV, Excel, PNG, JPG, or WebP file.";
   }
 
+
   return "";
 }
+
 
 function selectFile(file) {
   const errorMessage = validateFile(file);
@@ -896,6 +981,7 @@ function selectFile(file) {
     showError(errorMessage);
     return;
   }
+
 
   selectedFile = file;
   byId("file-name").textContent = file.name;
@@ -906,6 +992,7 @@ function selectFile(file) {
   byId("upload-status").className = "inline-status";
 }
 
+
 function clearSelectedFile() {
   selectedFile = null;
   byId("portfolio-file").value = "";
@@ -915,6 +1002,7 @@ function clearSelectedFile() {
   byId("upload-status").className = "inline-status";
 }
 
+
 async function processSelectedFile() {
   const errorMessage = validateFile(selectedFile);
   if (errorMessage) {
@@ -922,17 +1010,20 @@ async function processSelectedFile() {
     return;
   }
 
+
   const analyzeButton = byId("analyze-file");
   const status = byId("upload-status");
   setLoading(analyzeButton, true, "Analyzing...");
   status.textContent = "Extracting holdings from your file...";
   status.className = "inline-status";
 
+
   try {
     const holdings = await extractHoldings(selectedFile);
     if (!holdings.length) {
       throw new Error("No holdings were found in that file.");
     }
+
 
     status.textContent = "Holdings extracted. Generating portfolio analysis...";
     const analysis = await analyzePortfolio(holdings);
@@ -956,6 +1047,7 @@ async function processSelectedFile() {
   }
 }
 
+
 function loadSamplePortfolio(message = "Sample portfolio restored.") {
   currentHoldings = cloneHoldings(mockHoldings);
   currentAnalysis = cloneAnalysis(mockAnalysis);
@@ -967,16 +1059,19 @@ function loadSamplePortfolio(message = "Sample portfolio restored.") {
   showToast(message);
 }
 
+
 function removePortfolio() {
   if (!currentHoldings.length) {
     showToast("There is no portfolio to remove.");
     return;
   }
 
+
   const confirmed = window.confirm("Remove the current portfolio from this development session?");
   if (!confirmed) {
     return;
   }
+
 
   currentHoldings = [];
   currentAnalysis = null;
@@ -988,10 +1083,12 @@ function removePortfolio() {
   showToast("Portfolio removed from this session.");
 }
 
+
 function csvEscape(value) {
   const text = String(value ?? "");
   return `"${text.replace(/"/g, '""')}"`;
 }
+
 
 function downloadFile(filename, content, type) {
   const blob = new Blob([content], { type });
@@ -1005,11 +1102,13 @@ function downloadFile(filename, content, type) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+
 function downloadCsvReport() {
   if (!currentHoldings.length) {
     showError("Import a portfolio before downloading a report.");
     return;
   }
+
 
   const rows = [
     ["Ticker", "Name", "Shares", "Current Price", "Total Value", "Gain/Loss", "Gain/Loss Percent"],
@@ -1028,11 +1127,13 @@ function downloadCsvReport() {
   showToast("CSV report downloaded.");
 }
 
+
 function downloadSummaryReport() {
   if (!currentAnalysis || !currentHoldings.length) {
     showError("Import a portfolio before downloading a summary.");
     return;
   }
+
 
   const observations = Array.isArray(currentAnalysis.observations)
     ? currentAnalysis.observations.map((item) => `- ${item}`).join("\r\n")
@@ -1055,9 +1156,11 @@ function downloadSummaryReport() {
     "Educational information only, not financial advice."
   ].join("\r\n");
 
+
   downloadFile("portfolio-iq-summary.txt", report, "text/plain;charset=utf-8");
   showToast("Summary report downloaded.");
 }
+
 
 function initializeEvents() {
   byId("login-form").addEventListener("submit", (event) => {
@@ -1065,12 +1168,15 @@ function initializeEvents() {
     showDashboard();
   });
 
+
   document.querySelectorAll("[data-page]").forEach((element) => {
     element.addEventListener("click", () => showPage(element.dataset.page));
   });
 
+
   byId("profile-shortcut").addEventListener("click", () => showPage("settings-page"));
   byId("sign-out").addEventListener("click", signOut);
+
 
   byId("chat-send").addEventListener("click", sendChat);
   byId("chat-input").addEventListener("keydown", (event) => {
@@ -1080,6 +1186,7 @@ function initializeEvents() {
     }
   });
 
+
   document.querySelectorAll("[data-chat-mode]").forEach((button) => {
     button.addEventListener("click", () => {
       if (button.dataset.chatMode !== chatMode) {
@@ -1087,6 +1194,7 @@ function initializeEvents() {
       }
     });
   });
+
 
   const fileInput = byId("portfolio-file");
   const dropZone = byId("drop-zone");
@@ -1107,6 +1215,7 @@ function initializeEvents() {
     }
   });
 
+
   ["dragenter", "dragover"].forEach((eventName) => {
     dropZone.addEventListener(eventName, (event) => {
       event.preventDefault();
@@ -1121,15 +1230,18 @@ function initializeEvents() {
   });
   dropZone.addEventListener("drop", (event) => selectFile(event.dataTransfer.files[0]));
 
+
   byId("clear-file").addEventListener("click", clearSelectedFile);
   byId("analyze-file").addEventListener("click", processSelectedFile);
   byId("use-sample").addEventListener("click", () => loadSamplePortfolio("Sample portfolio loaded."));
   byId("remove-portfolio").addEventListener("click", removePortfolio);
   byId("restore-sample").addEventListener("click", () => loadSamplePortfolio());
 
+
   byId("download-csv").addEventListener("click", downloadCsvReport);
   byId("download-summary").addEventListener("click", downloadSummaryReport);
   byId("print-report").addEventListener("click", () => window.print());
+
 
   byId("settings-form").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1140,6 +1252,7 @@ function initializeEvents() {
   });
 }
 
+
 function initializeApp() {
   initializeEvents();
   byId("api-status").textContent = USE_MOCKS ? "Mock mode" : "Django connected";
@@ -1147,5 +1260,6 @@ function initializeApp() {
   updateUserDisplay();
   byId("email").focus();
 }
+
 
 document.addEventListener("DOMContentLoaded", initializeApp);
