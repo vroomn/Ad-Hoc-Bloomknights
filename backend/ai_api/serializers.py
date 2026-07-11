@@ -10,3 +10,7 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
       class Meta:
             model = Group
             fields = ["url", "name"]
+
+class QuerySerializer(serializers.Serializer):
+      location = serializers.CharField(required=True)
+      message = serializers.CharField(required=True)

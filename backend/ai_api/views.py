@@ -1,23 +1,17 @@
-from django.contrib.auth.models import Group, User
-from rest_framework import permissions, viewsets
-
-from ai_api.serializers import GroupSerializer, UserSerializer
-
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-
-    queryset = User.objects.all().order_by("-date_joined")
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status as stat, request
 
 
-class GroupViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
+class QueryView(APIView):
+    def get(self, request: request.Request):
+        query = request.query_params.get("q")
 
-    queryset = Group.objects.all().order_by("name")
-    serializer_class = GroupSerializer
-    permission_classes = [permissions.IsAuthenticated]
+        if not query:
+            return Response(
+                {"error": "Missing required query parameter"},
+                status= stat.HTTP_400_BAD_REQUEST
+            )
+        
+        result = f"You searched for: {query}"
+        return Response(result, status=stat.HTTP_200_OK)
