@@ -10,90 +10,330 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1/dist/chartjs-chart-financial.min.js"></script>
 </head>
-<body>
-  <!-- LOGIN SCREEN -->
-  <div id="login-screen">
-    <div class="login-card">
-      <h1>📊 Portfolio IQ</h1>
-      <p class="subtitle">Sign in to your dashboard</p>
-      <input id="email" type="text" placeholder="Email" />
-      <input id="password" type="password" placeholder="Password" />
-      <button id="login-btn">Sign In</button>
-    </div>
-  </div>
 
-  <!-- DASHBOARD -->
+<body>
+  <section id="login-screen" aria-labelledby="login-title">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="brand-mark" aria-hidden="true">&#128202;</span>
+        <span>Portfolio IQ</span>
+      </div>
+
+      <h1 id="login-title">Welcome back</h1>
+      <p class="subtitle">Sign in to view your portfolio dashboard.</p>
+
+      <form id="login-form" novalidate>
+        <label class="field-label" for="email">Email</label>
+        <input id="email" type="email" placeholder="name@example.com" autocomplete="username" />
+
+        <div class="field-heading">
+          <label class="field-label" for="password">Password</label>
+          <span>Optional in preview</span>
+        </div>
+        <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+
+        <button id="login-btn" type="submit">Continue to Dashboard</button>
+      </form>
+
+      <p class="dev-note">
+        Development access is enabled. Password verification is temporarily bypassed.
+      </p>
+      <p class="legal-note">Educational information only, not financial advice.</p>
+    </div>
+  </section>
+
   <div id="dashboard" class="hidden">
-    <!-- LEFT SIDEBAR -->
-    <aside class="sidebar">
-      <div class="logo">📊 Portfolio IQ</div>
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="logo"><span aria-hidden="true">&#128202;</span> Portfolio IQ</div>
+
       <nav>
-        <div class="nav-item active">🏠 Dashboard</div>
-        <div class="nav-item">📥 Data Ingest</div>
-        <div class="nav-item">📈 Valuation</div>
-        <div class="nav-item">📋 Reports</div>
+        <button class="nav-item active" type="button" data-page="dashboard-page">
+          <span aria-hidden="true">&#127968;</span> Dashboard
+        </button>
+        <button class="nav-item" type="button" data-page="ingest-page">
+          <span aria-hidden="true">&#128229;</span> Data Ingest
+        </button>
+        <button class="nav-item" type="button" data-page="valuation-page">
+          <span aria-hidden="true">&#128200;</span> Valuation
+        </button>
+        <button class="nav-item" type="button" data-page="reports-page">
+          <span aria-hidden="true">&#128203;</span> Reports
+        </button>
       </nav>
-      <div class="nav-item settings-item">⚙️ Settings</div>
+
+      <button class="nav-item settings-item" type="button" data-page="settings-page">
+        <span aria-hidden="true">&#9881;</span> Settings
+      </button>
     </aside>
 
-    <!-- MAIN AREA -->
     <div class="main-area">
-      <!-- TOP BAR -->
       <header class="topbar">
-        <span></span>
-        <div class="user-chip">
-          <span class="avatar">K</span>
-          <span>Kevin</span>
-        </div>
+        <span id="page-label" class="sr-only">Dashboard</span>
+        <button class="user-chip" id="profile-shortcut" type="button" title="Open settings">
+          <span class="avatar" id="user-avatar">K</span>
+          <span id="user-name">Kevin</span>
+        </button>
       </header>
 
       <div class="content-row">
-        <!-- CENTER CONTENT -->
         <main class="center-content">
-          <div class="metrics-row">
-            <div class="metric-card">
-              <div class="metric-label">Current Value</div>
-              <div class="metric-value" id="metric-total"></div>
+          <section id="dashboard-page" class="page">
+            <div class="metrics-row">
+              <div class="metric-card">
+                <div class="metric-label">Current Value</div>
+                <div class="metric-value" id="metric-total">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Y/Y Growth</div>
+                <div class="metric-value green" id="metric-ytd">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Overall Growth</div>
+                <div class="metric-value green" id="metric-overall">--</div>
+              </div>
             </div>
-            <div class="metric-card">
-              <div class="metric-label">Y/Y Growth</div>
-              <div class="metric-value green" id="metric-ytd"></div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-label">Overall Growth</div>
-              <div class="metric-value green" id="metric-overall"></div>
-            </div>
-          </div>
 
-          <div class="panel">
-            <h3>Graphs of Data</h3>
-            <canvas id="history-chart" height="90"></canvas>
-          </div>
+            <div class="panel chart-panel">
+              <h3>Graphs of Data</h3>
+              <div class="chart-frame">
+                <canvas id="history-chart" aria-label="Portfolio value history chart"></canvas>
+              </div>
+            </div>
 
-          <div class="panel">
-            <h3>Holdings</h3>
-            <table id="holdings-table">
-              <thead>
-                <tr><th>Ticker</th><th>Name</th><th>Shares</th><th>Price</th><th>Value</th><th>Gain/Loss</th></tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
+            <div class="panel">
+              <div class="panel-heading">
+                <h3>Holdings</h3>
+                <span id="holdings-count" class="panel-meta"></span>
+              </div>
+              <div class="table-wrap">
+                <table id="holdings-table">
+                  <thead>
+                    <tr>
+                      <th>Ticker</th>
+                      <th>Name</th>
+                      <th>Shares</th>
+                      <th>Price</th>
+                      <th>Value</th>
+                      <th>Gain/Loss</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="ingest-page" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <h2>Data Ingest</h2>
+                <p>Import a portfolio file and prepare it for analysis.</p>
+              </div>
+              <span class="status-badge" id="api-status">Mock mode</span>
+            </div>
+
+            <div class="panel upload-panel">
+              <input
+                id="portfolio-file"
+                class="visually-hidden-input"
+                type="file"
+                accept=".csv,.xls,.xlsx,.png,.jpg,.jpeg,.webp"
+              />
+              <div id="drop-zone" class="drop-zone" role="button" tabindex="0">
+                <span class="upload-icon" aria-hidden="true">&#8679;</span>
+                <strong>Drop your portfolio file here</strong>
+                <span>CSV, Excel, PNG, JPG, or WebP</span>
+                <button id="choose-file" class="secondary-btn" type="button">Choose File</button>
+              </div>
+
+              <div id="file-summary" class="file-summary hidden" aria-live="polite">
+                <div>
+                  <strong id="file-name"></strong>
+                  <span id="file-size"></span>
+                </div>
+                <button id="clear-file" class="icon-btn" type="button" title="Clear selected file" aria-label="Clear selected file">&times;</button>
+              </div>
+
+              <div class="action-row">
+                <button id="analyze-file" class="primary-btn" type="button" disabled>Analyze Portfolio</button>
+                <button id="use-sample" class="secondary-btn" type="button">Use Sample Data</button>
+                <button id="remove-portfolio" class="danger-btn" type="button">Remove Portfolio</button>
+              </div>
+              <p id="upload-status" class="inline-status" role="status"></p>
+            </div>
+
+            <div id="ingest-results" class="panel hidden">
+              <div class="panel-heading">
+                <h3>Extracted Holdings</h3>
+                <span id="ingest-count" class="panel-meta"></span>
+              </div>
+              <div class="table-wrap">
+                <table id="ingest-table">
+                  <thead>
+                    <tr>
+                      <th>Ticker</th>
+                      <th>Company</th>
+                      <th>Shares</th>
+                      <th>Current Value</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="valuation-page" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <h2>Portfolio Valuation</h2>
+                <p>Review growth, diversification, concentration, and risk.</p>
+              </div>
+            </div>
+
+            <div id="valuation-empty" class="panel empty-state hidden">
+              <h3>No portfolio available</h3>
+              <p>Import a portfolio from Data Ingest to generate a valuation.</p>
+              <button class="primary-btn page-link" type="button" data-page="ingest-page">Go to Data Ingest</button>
+            </div>
+
+            <div id="valuation-content">
+              <div class="metrics-row analysis-metrics">
+                <div class="metric-card">
+                  <div class="metric-label">Diversification</div>
+                  <div class="metric-value" id="diversification-score">--</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Risk Level</div>
+                  <div class="metric-value" id="risk-level">--</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Largest Position</div>
+                  <div class="metric-value" id="largest-position">--</div>
+                </div>
+              </div>
+
+              <div class="valuation-grid">
+                <div class="panel sector-panel">
+                  <h3>Sector Allocation</h3>
+                  <div class="sector-chart-frame">
+                    <canvas id="sector-chart" aria-label="Portfolio sector allocation chart"></canvas>
+                  </div>
+                </div>
+                <div class="panel observations-panel">
+                  <h3>AI Observations</h3>
+                  <ul id="observations-list" class="observation-list"></ul>
+                </div>
+              </div>
+
+              <div id="concentration-warning" class="warning-panel" role="status"></div>
+            </div>
+          </section>
+
+          <section id="reports-page" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <h2>Reports</h2>
+                <p>Review or export a snapshot of your current portfolio.</p>
+              </div>
+            </div>
+
+            <div id="reports-empty" class="panel empty-state hidden">
+              <h3>No report to generate</h3>
+              <p>Import a portfolio first, then return here to export it.</p>
+              <button class="primary-btn page-link" type="button" data-page="ingest-page">Import Portfolio</button>
+            </div>
+
+            <div id="reports-content">
+              <div class="panel report-toolbar">
+                <div>
+                  <h3>Portfolio Summary</h3>
+                  <p id="report-generated">Ready to export</p>
+                </div>
+                <div class="action-row report-actions">
+                  <button id="download-csv" class="secondary-btn" type="button">Download CSV</button>
+                  <button id="download-summary" class="primary-btn" type="button">Download Summary</button>
+                  <button id="print-report" class="secondary-btn" type="button">Print</button>
+                </div>
+              </div>
+
+              <div class="report-summary-grid">
+                <div class="summary-item"><span>Total value</span><strong id="report-value">--</strong></div>
+                <div class="summary-item"><span>Holdings</span><strong id="report-holdings">--</strong></div>
+                <div class="summary-item"><span>Risk</span><strong id="report-risk">--</strong></div>
+                <div class="summary-item"><span>Diversification</span><strong id="report-diversification">--</strong></div>
+              </div>
+
+              <div class="panel">
+                <h3>Report Notes</h3>
+                <ul id="report-notes" class="observation-list"></ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="settings-page" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <h2>Settings</h2>
+                <p>Manage display, privacy, and development-session preferences.</p>
+              </div>
+            </div>
+
+            <form id="settings-form" class="panel settings-form">
+              <h3>Profile</h3>
+              <label class="field-label" for="display-name">Display name</label>
+              <input id="display-name" type="text" value="Kevin" maxlength="40" />
+
+              <label class="checkbox-row" for="share-portfolio">
+                <input id="share-portfolio" type="checkbox" checked />
+                <span>
+                  <strong>Share portfolio context with the AI chat</strong>
+                  <small>Turn this off to ask general finance questions without sending holdings.</small>
+                </span>
+              </label>
+
+              <button class="primary-btn" type="submit">Save Settings</button>
+            </form>
+
+            <div class="panel session-panel">
+              <div>
+                <h3>Development Session</h3>
+                <p>Password verification and live backend requests are disabled while mock mode is active.</p>
+              </div>
+              <div class="action-row">
+                <button id="restore-sample" class="secondary-btn" type="button">Restore Sample Data</button>
+                <button id="sign-out" class="danger-btn" type="button">Sign Out</button>
+              </div>
+            </div>
+
+            <div class="privacy-panel">
+              <strong>Protect your information</strong>
+              <p>Never submit passwords, Social Security numbers, bank logins, or card numbers in uploads or chat.</p>
+            </div>
+          </section>
         </main>
 
-        <!-- RIGHT CHAT COLUMN -->
-        <aside class="chat-panel">
-          <div class="chat-header">✨ Chat Box</div>
-          <div class="chat-messages" id="chat-messages"></div>
+        <aside class="chat-panel" aria-label="Financial assistant">
+          <div class="chat-header"><span aria-hidden="true">&#10024;</span> Chat Box</div>
+          <div class="chat-mode-tabs" role="group" aria-label="Chat mode">
+            <button class="chat-mode active" type="button" data-chat-mode="portfolio">Portfolio</button>
+            <button class="chat-mode" type="button" data-chat-mode="general">General</button>
+          </div>
+          <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+          <p class="chat-disclaimer">Educational information only, not financial advice.</p>
           <div class="chat-input-row">
-            <input id="chat-input" type="text" placeholder="Ask about your portfolio…" />
-            <button id="chat-send">Send</button>
+            <label class="sr-only" for="chat-input">Ask the financial assistant</label>
+            <input id="chat-input" type="text" placeholder="Ask about your portfolio..." autocomplete="off" />
+            <button id="chat-send" type="button">Send</button>
           </div>
         </aside>
       </div>
     </div>
   </div>
 
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
