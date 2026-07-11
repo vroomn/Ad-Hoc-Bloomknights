@@ -5,6 +5,7 @@ FROM python:3.13
  
 # Create the app directory
 RUN mkdir /app
+RUN mkdir /database
  
 # Set the working directory inside the container
 WORKDIR /app
@@ -31,4 +32,4 @@ COPY . /app/
 EXPOSE 8000
  
 # Run Django’s development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "backend/manage.py", "runserver", "0.0.0.0:8000"]
