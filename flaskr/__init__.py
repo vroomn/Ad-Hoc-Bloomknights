@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, send_from_directory, url_for, redirect
+from flask import Flask, send_from_directory, url_for, redirect, request
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -33,6 +33,14 @@ def create_app(test_config=None):
     @app.route('/')
     def index():
         return send_from_directory('static', 'index.html')
+    
+    @app.route('/upload', methods=['GET', 'POST'])
+    def upload_file():
+        if request.method == 'POST':
+            f = request.files['file']
+            f.save(f.filename or "noname.txt")
+
+        return "success"
     
     # -------------------------
     

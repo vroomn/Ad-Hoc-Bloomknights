@@ -1306,7 +1306,6 @@ function selectFile(file) {
     return;
   }
 
-
   selectedFile = file;
   byId("file-name").textContent = file.name;
   byId("file-size").textContent = formatFileSize(file.size);
@@ -1342,6 +1341,13 @@ async function processSelectedFile() {
   status.textContent = "Extracting holdings from your file...";
   status.className = "inline-status";
 
+  // FIXME:
+  // Inject POST of the file
+  let formData = new FormData();
+     
+  formData.append("file", selectedFile);
+  fetch('/upload', {method: "POST", body: formData})
+  //console.log(selectedFile)
 
   try {
     const holdings = await extractHoldings(selectedFile);
@@ -1601,6 +1607,7 @@ function prefillSupportFromChat() {
 function initializeEvents() {
   byId("login-form").addEventListener("submit", (event) => {
     event.preventDefault();
+    // Inject a POST event to indicate a user of any type is logging in
     showDashboard();
   });
 
