@@ -2,6 +2,7 @@
 import csv
 import multiprocessing
 import psycopg2
+import pandas as pd
 
 connection = psycopg2.connect(
     host="localhost",
@@ -11,7 +12,17 @@ connection = psycopg2.connect(
 )
 cursor = connection.cursor()
 
-with open('inventory.csv', 'r') as f:
+
+#used google AI to help with this function
+# Assign the user's uploaded CSV to a DataFrame variable
+file_path = "user_uploaded_data.csv"
+dataset_variable = pd.read_csv(file_path)
+
+# You can now manipulate the variable
+print(dataset_variable.head())
+
+
+with open(file_path, 'r') as f:
     csv_reader = csv.reader(f)
     next(csv_reader)  # Skip header row
     for row in csv_reader:
