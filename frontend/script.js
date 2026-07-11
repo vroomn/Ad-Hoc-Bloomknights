@@ -55,18 +55,30 @@ const mockAnalysis = {
   ytdGrowthPercent: 29.7,
   overallGrowthPercent: 46.5,
   history: [
-    { month: "Aug", value: 6200 },
-    { month: "Sep", value: 6450 },
-    { month: "Oct", value: 6100 },
-    { month: "Nov", value: 6800 },
-    { month: "Dec", value: 7150 },
-    { month: "Jan", value: 7000 },
-    { month: "Feb", value: 7600 },
-    { month: "Mar", value: 7900 },
-    { month: "Apr", value: 7700 },
-    { month: "May", value: 8400 },
-    { month: "Jun", value: 8850 },
-    { month: "Jul", value: 9080.75 }
+    { date: "2024-08-01", month: "Aug", value: 4800 },
+    { date: "2024-09-01", month: "Sep", value: 4920 },
+    { date: "2024-10-01", month: "Oct", value: 4875 },
+    { date: "2024-11-01", month: "Nov", value: 5100 },
+    { date: "2024-12-01", month: "Dec", value: 5250 },
+    { date: "2025-01-01", month: "Jan", value: 5180 },
+    { date: "2025-02-01", month: "Feb", value: 5400 },
+    { date: "2025-03-01", month: "Mar", value: 5580 },
+    { date: "2025-04-01", month: "Apr", value: 5500 },
+    { date: "2025-05-01", month: "May", value: 5750 },
+    { date: "2025-06-01", month: "Jun", value: 5900 },
+    { date: "2025-07-01", month: "Jul", value: 6050 },
+    { date: "2025-08-01", month: "Aug", value: 6200 },
+    { date: "2025-09-01", month: "Sep", value: 6450 },
+    { date: "2025-10-01", month: "Oct", value: 6100 },
+    { date: "2025-11-01", month: "Nov", value: 6800 },
+    { date: "2025-12-01", month: "Dec", value: 7150 },
+    { date: "2026-01-01", month: "Jan", value: 7000 },
+    { date: "2026-02-01", month: "Feb", value: 7600 },
+    { date: "2026-03-01", month: "Mar", value: 7900 },
+    { date: "2026-04-01", month: "Apr", value: 7700 },
+    { date: "2026-05-01", month: "May", value: 8400 },
+    { date: "2026-06-01", month: "Jun", value: 8850 },
+    { date: "2026-07-01", month: "Jul", value: 9080.75 }
   ],
   sectorBreakdown: {
     Technology: 47.85,
@@ -95,13 +107,19 @@ let sectorChart = null;
 let toastTimer = null;
 let displayName = "Kevin";
 let sharePortfolio = true;
+let chartRange = "1Y";
+let lastPortfolioUpdate = new Date();
+let assistantCollapsed = false;
+let lastFocusedHoldingRow = null;
+let currentPageId = "dashboard-page";
+let assistantCollapsedBeforeSupport = false;
 
 
 const allowedExtensions = ["csv", "xls", "xlsx", "png", "jpg", "jpeg", "webp"];
 const pageNames = {
   "dashboard-page": "Dashboard",
-  "ingest-page": "Data Ingest",
-  "valuation-page": "Valuation",
+  "ingest-page": "Import Portfolio",
+  "valuation-page": "Portfolio Analysis",
   "reports-page": "Reports",
   "support-page": "Live Support",
   "settings-page": "Settings"
@@ -295,6 +313,108 @@ function showError(message) {
 }
 
 
+function refreshIcons(root = null) {
+  if (!window.lucide) {
+    return;
+  }
+
+
+  try {
+    if (root) {
+      window.lucide.createIcons({ root });
+    } else {
+      window.lucide.createIcons();
+    }
+  } catch (error) {
+    try {
+      window.lucide.createIcons();
+    } catch (fallbackError) {
+      // Text labels and accessible names keep the interface usable without icons.
+    }
+  }
+}
+
+
+function renderAssistantContext() {
+  const context = byId("assistant-context-text");
+  if (!context) {
+    return;
+  }
+
+
+  if (chatMode === "general") {
+    context.textContent = "General mode - no portfolio data shared";
+  } else if (!sharePortfolio) {
+    context.textContent = "Portfolio sharing is turned off";
+  } else if (!currentHoldings.length) {
+    context.textContent = "No portfolio imported";
+  } else {
+    const dataType = USE_MOCKS ? "demo data" : "live portfolio data";
+    context.textContent = `Using ${currentHoldings.length} holdings from ${dataType}`;
+  }
+}
+
+
+function updateDataStatus() {
+  const status = byId("global-data-status");
+  const label = byId("global-data-label");
+  const updated = byId("last-updated");
+  const hasPortfolio = Boolean(currentAnalysis && currentHoldings.length);
+
+
+  status.classList.remove("demo", "live", "empty");
+  if (!hasPortfolio) {
+    status.classList.add("empty");
+    label.textContent = "No portfolio";
+    updated.textContent = "Import a portfolio to begin";
+  } else {
+    status.classList.add(USE_MOCKS ? "demo" : "live");
+    label.textContent = USE_MOCKS ? "Demo data" : "Live data";
+    updated.textContent = lastPortfolioUpdate
+      ? `Updated ${lastPortfolioUpdate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+      : "Update unavailable";
+  }
+
+
+  const apiStatus = byId("api-status");
+  if (apiStatus) {
+    apiStatus.textContent = USE_MOCKS ? "Demo data" : "Django connected";
+    apiStatus.classList.toggle("service-preview", USE_MOCKS);
+  }
+  renderAssistantContext();
+}
+
+
+function setAppProgress(loading, label = "Updating portfolio...") {
+  const progress = byId("app-progress");
+  byId("app-progress-label").textContent = label;
+  progress.classList.toggle("hidden", !loading);
+  progress.setAttribute("aria-busy", String(loading));
+  byId("dashboard").setAttribute("aria-busy", String(loading));
+}
+
+
+function setAssistantCollapsed(collapsed) {
+  assistantCollapsed = Boolean(collapsed);
+  const panel = byId("assistant-panel");
+  const button = byId("assistant-toggle");
+  panel.classList.toggle("collapsed", assistantCollapsed);
+  button.setAttribute("aria-expanded", String(!assistantCollapsed));
+  button.setAttribute(
+    "aria-label",
+    assistantCollapsed ? "Expand Portfolio IQ Assistant" : "Collapse Portfolio IQ Assistant"
+  );
+  button.title = assistantCollapsed ? "Expand assistant" : "Collapse assistant";
+
+
+  const icon = document.createElement("i");
+  icon.dataset.lucide = assistantCollapsed ? "panel-right-open" : "panel-right-close";
+  icon.setAttribute("aria-hidden", "true");
+  button.replaceChildren(icon);
+  refreshIcons(button);
+}
+
+
 function appendCell(row, text, className = "") {
   const cell = document.createElement("td");
   cell.textContent = text;
@@ -319,6 +439,7 @@ function appendEmptyRow(tbody, columnCount, message) {
 
 function renderHoldings(holdings) {
   const tbody = document.querySelector("#holdings-table tbody");
+  closeHoldingDrawer(false);
   tbody.replaceChildren();
   byId("holdings-count").textContent = holdings.length
     ? `${holdings.length} positions`
@@ -354,8 +475,95 @@ function renderHoldings(holdings) {
       `${arrow} ${formatCurrency(Math.abs(gain))} (${Math.abs(gainPercent).toFixed(2)}%)`,
       gainClass
     );
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-label", `View details for ${holdingTicker(holding)} ${holdingName(holding)}`);
+    row.addEventListener("click", () => openHoldingDrawer(holding, row));
+    row.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openHoldingDrawer(holding, row);
+      }
+    });
     tbody.appendChild(row);
   });
+}
+
+
+function holdingInsight(holding, allocation) {
+  if (allocation >= 35) {
+    return `${holdingTicker(holding)} is a large position at ${allocation.toFixed(1)}% of the portfolio. Its price movement may have an outsized effect on total performance.`;
+  }
+
+
+  if (holdingGain(holding) < 0) {
+    return `${holdingTicker(holding)} is currently below its estimated cost basis. Review the position alongside your time horizon and overall diversification.`;
+  }
+
+
+  return `${holdingTicker(holding)} represents ${allocation.toFixed(1)}% of the portfolio and is currently contributing positively to the displayed total return.`;
+}
+
+
+function openHoldingDrawer(holding, sourceRow) {
+  const drawer = byId("holding-drawer");
+  const backdrop = byId("drawer-backdrop");
+  const value = holdingValue(holding);
+  const gain = holdingGain(holding);
+  const gainPercent = holdingGainPercent(holding);
+  const total = currentHoldings.reduce((sum, item) => sum + holdingValue(item), 0);
+  const allocation = total > 0 ? (value / total) * 100 : 0;
+  const costBasis = value - gain;
+
+
+  lastFocusedHoldingRow = sourceRow || null;
+  byId("drawer-name").textContent = holdingName(holding);
+  byId("drawer-ticker").textContent = holdingTicker(holding);
+  byId("drawer-price").textContent = formatCurrency(holdingPrice(holding));
+  byId("drawer-value").textContent = formatCurrency(value);
+  byId("drawer-allocation").textContent = `${allocation.toFixed(1)}%`;
+  byId("drawer-shares").textContent = String(holdingShares(holding));
+  byId("drawer-cost-basis").textContent = formatCurrency(costBasis);
+  byId("drawer-sector").textContent = String(holding.sector ?? "Not provided");
+
+
+  const returnElement = byId("drawer-return");
+  returnElement.textContent = `${formatCurrency(gain)} (${formatPercent(gainPercent)})`;
+  returnElement.classList.toggle("gain", gain >= 0);
+  returnElement.classList.toggle("loss", gain < 0);
+
+
+  byId("drawer-allocation-label").textContent = `${allocation.toFixed(1)}% of portfolio`;
+  byId("drawer-allocation-bar").style.width = `${Math.min(100, Math.max(0, allocation))}%`;
+  byId("drawer-insight").textContent = holdingInsight(holding, allocation);
+
+
+  backdrop.classList.remove("hidden");
+  drawer.classList.remove("hidden");
+  drawer.setAttribute("aria-hidden", "false");
+  document.body.classList.add("drawer-open");
+  drawer.focus();
+}
+
+
+function closeHoldingDrawer(restoreFocus = true) {
+  const drawer = byId("holding-drawer");
+  const backdrop = byId("drawer-backdrop");
+  if (!drawer || drawer.classList.contains("hidden")) {
+    return;
+  }
+
+
+  drawer.classList.add("hidden");
+  backdrop.classList.add("hidden");
+  drawer.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("drawer-open");
+
+
+  if (restoreFocus && lastFocusedHoldingRow?.isConnected) {
+    lastFocusedHoldingRow.focus();
+  }
+  lastFocusedHoldingRow = null;
 }
 
 
@@ -462,10 +670,13 @@ function renderAnalysis(analysis) {
   setGrowthMetric(byId("metric-overall"), hasPortfolio ? overallGrowth : null);
 
 
+  byId("dashboard-empty").classList.toggle("hidden", hasPortfolio);
+  byId("dashboard-content").classList.toggle("hidden", !hasPortfolio);
   byId("valuation-empty").classList.toggle("hidden", hasPortfolio);
   byId("valuation-content").classList.toggle("hidden", !hasPortfolio);
   byId("reports-empty").classList.toggle("hidden", hasPortfolio);
   byId("reports-content").classList.toggle("hidden", !hasPortfolio);
+  updateDataStatus();
 
 
   if (!hasPortfolio) {
@@ -522,6 +733,54 @@ function renderAnalysis(analysis) {
 }
 
 
+function historyForRange(history, range) {
+  const pointCounts = { "1M": 2, "3M": 4, "1Y": 12 };
+  const count = pointCounts[range];
+  return count ? history.slice(-count) : history;
+}
+
+
+function historyPointLabel(point) {
+  if (point.date) {
+    const dateValue = String(point.date).includes("T") ? point.date : `${point.date}T00:00:00`;
+    const date = new Date(dateValue);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleDateString("en-US", chartRange === "ALL"
+        ? { month: "short", year: "2-digit" }
+        : { month: "short" });
+    }
+  }
+
+
+  return point.month ?? point.label ?? "";
+}
+
+
+function setChartRange(range) {
+  if (!["1M", "3M", "1Y", "ALL"].includes(range)) {
+    return;
+  }
+
+
+  chartRange = range;
+  const periodLabels = {
+    "1M": "Past month",
+    "3M": "Past 3 months",
+    "1Y": "Past year",
+    ALL: "All available history"
+  };
+  byId("performance-period-label").textContent = periodLabels[range];
+
+
+  document.querySelectorAll("[data-chart-range]").forEach((button) => {
+    const active = button.dataset.chartRange === range;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  renderHistoryChart();
+}
+
+
 function renderHistoryChart() {
   if (!window.Chart || !currentAnalysis || !currentHoldings.length) {
     return;
@@ -534,7 +793,7 @@ function renderHistoryChart() {
   }
 
 
-  const history = getHistory(currentAnalysis);
+  const history = historyForRange(getHistory(currentAnalysis), chartRange);
   if (!history.length) {
     return;
   }
@@ -543,14 +802,14 @@ function renderHistoryChart() {
   historyChart = new Chart(byId("history-chart"), {
     type: "line",
     data: {
-      labels: history.map((point) => point.month ?? point.date ?? point.label ?? ""),
+      labels: history.map(historyPointLabel),
       datasets: [
         {
           label: "Portfolio Value",
           data: history.map((point) => firstNumber(point.value, point.totalValue) ?? 0),
           borderColor: "#2563eb",
           borderWidth: 2.5,
-          pointRadius: 0,
+          pointRadius: history.length <= 4 ? 3 : 0,
           pointHoverRadius: 4,
           tension: 0.3,
           fill: false
@@ -686,7 +945,8 @@ function renderReports(analysis) {
   byId("report-diversification").textContent = Number.isFinite(diversification)
     ? `${Math.round(diversification)}/100`
     : "--";
-  byId("report-generated").textContent = `Updated ${new Date().toLocaleString("en-US", {
+  const reportDate = lastPortfolioUpdate || new Date();
+  byId("report-generated").textContent = `Updated ${reportDate.toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -811,7 +1071,7 @@ function mockAssistantReply(message, holdings) {
 
 
   if (!holdings.length) {
-    return "There is no portfolio connected to this chat. Import one from Data Ingest or switch to General mode.";
+    return "There is no portfolio connected to this chat. Import a portfolio or switch to General mode.";
   }
 
 
@@ -896,6 +1156,7 @@ function renderSuggestedPrompts() {
 
 function setChatMode(mode) {
   chatMode = mode === "general" ? "general" : "portfolio";
+  renderAssistantContext();
   document.querySelectorAll("[data-chat-mode]").forEach((button) => {
     button.classList.toggle("active", button.dataset.chatMode === chatMode);
   });
@@ -922,6 +1183,18 @@ function showPage(pageId) {
   }
 
 
+  const enteringSupport = pageId === "support-page" && currentPageId !== "support-page";
+  const leavingSupport = currentPageId === "support-page" && pageId !== "support-page";
+  if (enteringSupport) {
+    assistantCollapsedBeforeSupport = assistantCollapsed;
+    setAssistantCollapsed(true);
+  } else if (leavingSupport && !assistantCollapsedBeforeSupport) {
+    setAssistantCollapsed(false);
+  }
+  currentPageId = pageId;
+
+
+  closeHoldingDrawer(false);
   document.querySelectorAll(".page").forEach((page) => {
     page.classList.toggle("hidden", page.id !== pageId);
   });
@@ -981,6 +1254,8 @@ function showDashboard() {
   renderIngestHoldings(currentHoldings);
   renderAnalysis(currentAnalysis);
   showPage("dashboard-page");
+  setAssistantCollapsed(false);
+  updateDataStatus();
 
 
   if (!byId("chat-messages").children.length) {
@@ -995,6 +1270,8 @@ function showDashboard() {
 function signOut() {
   supportRequest = null;
   renderSupportRequest();
+  closeHoldingDrawer(false);
+  setAssistantCollapsed(false);
   byId("dashboard").classList.add("hidden");
   byId("login-screen").classList.remove("hidden");
   byId("password").value = "";
@@ -1061,6 +1338,7 @@ async function processSelectedFile() {
   const analyzeButton = byId("analyze-file");
   const status = byId("upload-status");
   setLoading(analyzeButton, true, "Analyzing...");
+  setAppProgress(true, "Extracting holdings from your portfolio...");
   status.textContent = "Extracting holdings from your file...";
   status.className = "inline-status";
 
@@ -1073,22 +1351,26 @@ async function processSelectedFile() {
 
 
     status.textContent = "Holdings extracted. Generating portfolio analysis...";
+    setAppProgress(true, "Generating performance and risk insights...");
     const analysis = await analyzePortfolio(holdings);
     currentHoldings = holdings;
     currentAnalysis = analysis;
+    lastPortfolioUpdate = new Date();
     renderHoldings(currentHoldings);
     renderIngestHoldings(currentHoldings);
     renderAnalysis(currentAnalysis);
     status.textContent = USE_MOCKS
-      ? "Mock analysis complete. Sample holdings are ready."
+      ? "Demo analysis complete. Sample holdings are ready."
       : "Portfolio analysis complete.";
     status.className = "inline-status success";
-    showToast("Portfolio is ready. Open Dashboard or Valuation to review it.");
+    updateDataStatus();
+    showToast("Portfolio is ready. Open Dashboard or Portfolio Analysis to review it.");
   } catch (error) {
     status.textContent = error.message || "The portfolio could not be analyzed.";
     status.className = "inline-status error";
     showError(status.textContent);
   } finally {
+    setAppProgress(false);
     setLoading(analyzeButton, false);
     analyzeButton.disabled = !selectedFile;
   }
@@ -1098,11 +1380,13 @@ async function processSelectedFile() {
 function loadSamplePortfolio(message = "Sample portfolio restored.") {
   currentHoldings = cloneHoldings(mockHoldings);
   currentAnalysis = cloneAnalysis(mockAnalysis);
+  lastPortfolioUpdate = new Date();
   renderHoldings(currentHoldings);
   renderIngestHoldings(currentHoldings);
   renderAnalysis(currentAnalysis);
   byId("upload-status").textContent = "Sample portfolio is loaded.";
   byId("upload-status").className = "inline-status success";
+  updateDataStatus();
   showToast(message);
 }
 
@@ -1122,11 +1406,13 @@ function removePortfolio() {
 
   currentHoldings = [];
   currentAnalysis = null;
+  lastPortfolioUpdate = null;
   supportRequest = null;
   clearSelectedFile();
   renderHoldings(currentHoldings);
   renderIngestHoldings(currentHoldings);
   renderAnalysis(currentAnalysis);
+  updateDataStatus();
   showToast("Portfolio removed from this session.");
 }
 
@@ -1327,6 +1613,49 @@ function initializeEvents() {
   byId("profile-shortcut").addEventListener("click", () => showPage("settings-page"));
   byId("sign-out").addEventListener("click", signOut);
   byId("open-live-support").addEventListener("click", prefillSupportFromChat);
+  byId("assistant-toggle").addEventListener("click", () => {
+    setAssistantCollapsed(!assistantCollapsed);
+  });
+
+
+  document.querySelectorAll("[data-chart-range]").forEach((button) => {
+    button.addEventListener("click", () => setChartRange(button.dataset.chartRange));
+  });
+
+
+  byId("close-holding-drawer").addEventListener("click", () => closeHoldingDrawer());
+  byId("drawer-backdrop").addEventListener("click", () => closeHoldingDrawer());
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeHoldingDrawer();
+      return;
+    }
+
+
+    const drawer = byId("holding-drawer");
+    if (event.key === "Tab" && !drawer.classList.contains("hidden")) {
+      const focusable = [...drawer.querySelectorAll("button:not([disabled]), [href], input, select, textarea")];
+      if (!focusable.length) {
+        event.preventDefault();
+        drawer.focus();
+        return;
+      }
+
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!drawer.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  });
 
 
   byId("chat-send").addEventListener("click", sendChat);
@@ -1404,6 +1733,7 @@ function initializeEvents() {
     displayName = byId("display-name").value.trim() || "Kevin";
     sharePortfolio = byId("share-portfolio").checked;
     updateUserDisplay();
+    renderAssistantContext();
     showToast("Settings saved for this session.");
   });
 }
@@ -1411,14 +1741,13 @@ function initializeEvents() {
 
 function initializeApp() {
   initializeEvents();
-  if (window.lucide) {
-    window.lucide.createIcons();
-  }
-  byId("api-status").textContent = USE_MOCKS ? "Mock mode" : "Django connected";
+  refreshIcons();
+  setAssistantCollapsed(false);
   byId("share-portfolio").checked = sharePortfolio;
   renderSuggestedPrompts();
   renderSupportRequest();
   updateSupportCharacterCount();
+  updateDataStatus();
   updateUserDisplay();
   byId("email").focus();
 }
