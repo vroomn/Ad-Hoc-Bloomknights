@@ -9,6 +9,7 @@ def create_app(test_config=None):
         DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite')
     )
 
+    # Make sure a test config is not loaded
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)
     else:
@@ -16,6 +17,10 @@ def create_app(test_config=None):
 
     # Instance path is guaranteed by the docker image being built (a volume)
     #os.makedirs(app.instance_path, exist_ok=True)
+
+    # -------------------------
+    # Servicing Static Content
+    # -------------------------
 
     @app.route('/style.css')
     def style():
@@ -28,9 +33,8 @@ def create_app(test_config=None):
     @app.route('/')
     def index():
         return send_from_directory('static', 'index.html')
-
-    @app.route('/hello')
-    def hello():
-        return 'Hello world'
     
+    # -------------------------
+    
+    # Return the configured Flask system
     return app
