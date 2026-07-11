@@ -4,3 +4,7 @@ services:
       context: .
     ports:
       - 8000:8000
+    volumes:
+      - test-backend-volume:/app/backend/database
+volumes:
+  test-backend-volume:
