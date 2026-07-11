@@ -21,10 +21,12 @@ from rest_framework import routers
 from ai_api import views
 
 router = routers.DefaultRouter()
+# Defines routes used by 
 router.register(r"users", views.UserViewSet)
 router.register(r"groups", views.GroupViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("", include(router.urls)),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]
