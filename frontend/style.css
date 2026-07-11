@@ -84,4 +84,7 @@ tbody tr:hover { background: #f8fafc; }
 #chat-input { flex: 1; border: 1.5px solid #e2e8f0; border-radius: 10px; outline: none; padding: 9px 12px; font-size: 14px; min-width: 0; }
 #chat-input:focus { border-color: var(--brand); }
 #chat-send { border: none; background: var(--brand); color: white; border-radius: 10px; padding: 9px 16px; cursor: pointer; font-weight: 600; }
-#chat-send:hover { background: var(--brand-dark); }
+#chat-send:hover { background: var(--brand-dark); } /* ===== PAGE NAVIGATION ===== */
+.page {
+  width: 100%;
+}
