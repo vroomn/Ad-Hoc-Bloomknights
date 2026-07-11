@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio IQ</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-card">
+      <h1>📊 Portfolio IQ</h1>
+      <p class="subtitle">Sign in to your dashboard</p>
+      <input id="email" type="text" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+      <button id="login-btn">Sign In</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="hidden">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo">📊 Portfolio IQ</div>
+      <nav>
+        <div class="nav-item active">🏠 Dashboard</div>
+        <div class="nav-item">📥 Data Ingest</div>
+        <div class="nav-item">📈 Valuation</div>
+        <div class="nav-item">📋 Reports</div>
+      </nav>
+      <div class="nav-item settings-item">⚙️ Settings</div>
+    </aside>
+
+    <!-- MAIN AREA -->
+    <div class="main-area">
+      <!-- TOP BAR -->
+      <header class="topbar">
+        <span></span>
+        <div class="user-chip">
+          <span class="avatar">K</span>
+          <span>Kevin</span>
+        </div>
+      </header>
+
+      <div class="content-row">
+        <!-- CENTER CONTENT -->
+        <main class="center-content">
+          <div class="metrics-row">
+            <div class="metric-card">
+              <div class="metric-label">Current Value</div>
+              <div class="metric-value" id="metric-total"></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Y/Y Growth</div>
+              <div class="metric-value green" id="metric-ytd"></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Overall Growth</div>
+              <div class="metric-value green" id="metric-overall"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Graphs of Data</h3>
+            <canvas id="history-chart" height="90"></canvas>
+          </div>
+
+          <div class="panel">
+            <h3>Holdings</h3>
+            <table id="holdings-table">
+              <thead>
+                <tr><th>Ticker</th><th>Name</th><th>Shares</th><th>Price</th><th>Value</th><th>Gain/Loss</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </main>
+
+        <!-- RIGHT CHAT COLUMN -->
+        <aside class="chat-panel">
+          <div class="chat-header">✨ Chat Box</div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-input-row">
+            <input id="chat-input" type="text" placeholder="Ask about your portfolio…" />
+            <button id="chat-send">Send</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
