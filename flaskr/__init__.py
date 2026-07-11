@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, send_from_directory, url_for, redirect
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -17,9 +17,17 @@ def create_app(test_config=None):
     # Instance path is guaranteed by the docker image being built (a volume)
     #os.makedirs(app.instance_path, exist_ok=True)
 
+    @app.route('/style.css')
+    def style():
+        return redirect(url_for('static', filename='style.css'))
+    
+    @app.route('/script.js')
+    def script():
+        return redirect(url_for('static', filename='script.js'))
+
     @app.route('/')
     def index():
-        return 'Index Page'
+        return send_from_directory('static', 'index.html')
 
     @app.route('/hello')
     def hello():
