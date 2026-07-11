@@ -117,6 +117,15 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+    "/var/www/static/DatabaseMan/",
+     "/var/www/static/frontend/",
+]
+
+
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
