@@ -1754,3 +1754,119 @@ function initializeApp() {
 
 
 document.addEventListener("DOMContentLoaded", initializeApp);
+// ===== LOGIN BACKGROUND — layered market constellation =====
+(function loginBackground() {
+  const canvas = document.getElementById("login-bg");
+  const loginScreen = document.getElementById("login-screen");
+  if (!canvas || !loginScreen) return;
+  const c = canvas.getContext("2d");
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  let W, H;
+  function resize() {
+    W = canvas.offsetWidth; H = canvas.offsetHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  const mouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
+  window.addEventListener("mousemove", (e) => {
+    mouse.tx = e.clientX / window.innerWidth;
+    mouse.ty = e.clientY / window.innerHeight;
+  });
+
+  const LAYERS = [
+    { count: 30, size: [0.8, 1.4], speed: 0.10, alpha: 0.35, parallax: 6 },
+    { count: 22, size: [1.4, 2.2], speed: 0.18, alpha: 0.55, parallax: 14 },
+    { count: 14, size: [2.2, 3.2], speed: 0.28, alpha: 0.85, parallax: 26 },
+  ];
+
+  const particles = [];
+  LAYERS.forEach((layer, li) => {
+    for (let i = 0; i < layer.count; i++) {
+      particles.push({
+        layer: li,
+        x: Math.random() * 1.2 - 0.1,
+        y: Math.random() * 1.2 - 0.1,
+        vx: (Math.random() - 0.5) * layer.speed * 0.006,
+        vy: -(0.3 + Math.random() * 0.7) * layer.speed * 0.006,
+        r: layer.size[0] + Math.random() * (layer.size[1] - layer.size[0]),
+        green: Math.random() > 0.22,
+        pulse: Math.random() * Math.PI * 2,
+      });
+    }
+  });
+
+  let t = 0;
+  function frame() {
+    if (loginScreen.classList.contains("hidden") || loginScreen.offsetParent === null) {
+      requestAnimationFrame(frame);
+      return;
+    }
+    t += 0.016;
+
+    mouse.x += (mouse.tx - mouse.x) * 0.04;
+    mouse.y += (mouse.ty - mouse.y) * 0.04;
+
+    c.clearRect(0, 0, W, H);
+
+    const grid = 90;
+    const drift = (t * 4) % grid;
+    c.strokeStyle = "rgba(139, 148, 158, 0.045)";
+    c.lineWidth = 1;
+    for (let x = -drift; x < W; x += grid) {
+      c.beginPath(); c.moveTo(x, 0); c.lineTo(x, H); c.stroke();
+    }
+    for (let y = 0; y < H; y += grid) {
+      c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+    }
+
+    const pts = particles.map((p) => {
+      const px = (mouse.x - 0.5) * LAYERS[p.layer].parallax;
+      const py = (mouse.y - 0.5) * LAYERS[p.layer].parallax;
+      return { p, x: p.x * W + px, y: p.y * H + py };
+    });
+
+    for (let i = 0; i < pts.length; i++) {
+      if (pts[i].p.layer !== 2) continue;
+      for (let j = i + 1; j < pts.length; j++) {
+        if (pts[j].p.layer !== 2) continue;
+        const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+        const d = Math.hypot(dx, dy);
+        if (d < 130) {
+          c.strokeStyle = `rgba(0, 200, 5, ${0.10 * (1 - d / 130)})`;
+          c.beginPath();
+          c.moveTo(pts[i].x, pts[i].y);
+          c.lineTo(pts[j].x, pts[j].y);
+          c.stroke();
+        }
+      }
+    }
+
+    pts.forEach(({ p, x, y }) => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.y < -0.05) { p.y = 1.05; p.x = Math.random(); }
+      if (p.x < -0.05) p.x = 1.05;
+      if (p.x > 1.05) p.x = -0.05;
+
+      const layer = LAYERS[p.layer];
+      const pulse = 0.85 + 0.15 * Math.sin(t * 1.4 + p.pulse);
+      const color = p.green ? "0, 200, 5" : "255, 80, 0";
+
+      if (p.layer === 2) {
+        c.shadowBlur = 10;
+        c.shadowColor = `rgba(${color}, 0.6)`;
+      }
+      c.fillStyle = `rgba(${color}, ${layer.alpha * pulse})`;
+      c.beginPath();
+      c.arc(x, y, p.r * pulse, 0, Math.PI * 2);
+      c.fill();
+      c.shadowBlur = 0;
+    });
+
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
