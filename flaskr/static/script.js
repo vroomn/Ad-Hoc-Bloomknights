@@ -3,7 +3,7 @@
 
 // Keep mock mode enabled until the Django API contract is finalized.
 const USE_MOCKS = true;
-const API = "http://localhost:8000";
+const API = "http://localhost:5000";
 
 
 const mockHoldings = [
@@ -1104,11 +1104,21 @@ async function sendChat() {
   const sendButton = byId("chat-send");
   const message = input.value.trim();
 
-
   if (!message || sendButton.disabled) {
     return;
   }
 
+  // Send the query to Gemini
+  const baseUrl = API;
+  
+  // Define your query key-value pairs
+  const queryParams = {
+    q: message,
+  };
+
+  // Automatically format parameters to a query string: ?category=books&sort=recent_updates&limit=10
+  const searchParams = new URLSearchParams(queryParams).toString();
+  const finalUrl = `${baseUrl}/query?${searchParams}`;
 
   addChatMessage("user", message);
   input.value = "";
@@ -1116,12 +1126,19 @@ async function sendChat() {
   const thinking = addChatMessage("thinking", "Thinking...");
   setLoading(sendButton, true, "...");
 
+try {
+    const response = await fetch(finalUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log(data);
 
-  try {
+    try {
     const holdings = chatMode === "portfolio" && sharePortfolio ? currentHoldings : [];
     const reply = await askAssistant(message, holdings);
     thinking.remove();
-    addChatMessage("ai", reply);
+    addChatMessage("ai", data['response']);
   } catch (error) {
     thinking.remove();
     addChatMessage("ai", error.message || "Could not reach the AI service.");
@@ -1129,6 +1146,10 @@ async function sendChat() {
     setLoading(sendButton, false);
     input.focus();
   }
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+  
 }
 
 
