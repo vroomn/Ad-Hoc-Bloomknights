@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio IQ</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+
+<body>
+  <section id="login-screen" aria-labelledby="login-title">
+    <canvas id="login-bg" aria-hidden="true"></canvas>
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="brand-mark" aria-hidden="true"><i data-lucide="chart-line"></i></span>
+        <span>Portfolio IQ</span>
+      </div>
+
+
+      <h1 id="login-title">Welcome back</h1>
+      <p class="subtitle">Sign in to view your portfolio dashboard.</p>
+
+
+      <form id="login-form" novalidate>
+        <label class="field-label" for="email">Email</label>
+        <input id="email" type="email" placeholder="name@example.com" autocomplete="username" />
+
+
+        <div class="field-heading">
+          <label class="field-label" for="password">Password</label>
+          <span>Optional in preview</span>
+        </div>
+        <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+
+
+        <button id="login-btn" type="submit">Continue to Dashboard</button>
+      </form>
+
+
+      <p class="dev-note">
+        Development access is enabled. Password verification is temporarily bypassed.
+      </p>
+      <p class="legal-note">Educational information only, not financial advice.</p>
+    </div>
+  </section>
+
+
+  <div id="dashboard" class="hidden">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="logo"><i data-lucide="chart-line" aria-hidden="true"></i> Portfolio IQ</div>
+
+
+      <nav>
+        <button class="nav-item active" type="button" data-page="dashboard-page">
+          <i data-lucide="layout-dashboard" aria-hidden="true"></i> Dashboard
+        </button>
+        <button class="nav-item" type="button" data-page="ingest-page">
+          <i data-lucide="upload" aria-hidden="true"></i> Import Portfolio
+        </button>
+        <button class="nav-item" type="button" data-page="valuation-page">
+          <i data-lucide="chart-pie" aria-hidden="true"></i> Portfolio Analysis
+        </button>
+        <button class="nav-item" type="button" data-page="reports-page">
+          <i data-lucide="file-text" aria-hidden="true"></i> Reports
+        </button>
+        <button class="nav-item" type="button" data-page="support-page">
+          <i data-lucide="headphones" aria-hidden="true"></i> Live Support
+        </button>
+      </nav>
+
+
+      <button class="nav-item settings-item" type="button" data-page="settings-page">
+        <i data-lucide="settings" aria-hidden="true"></i> Settings
+      </button>
+    </aside>
+
+
+    <div class="main-area">
+      <header class="topbar">
+        <div class="topbar-context">
+          <span id="page-label" class="topbar-page-label">Dashboard</span>
+          <span id="global-data-status" class="global-data-status demo">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="global-data-label">Demo data</span>
+          </span>
+          <span id="last-updated" class="last-updated">Updated just now</span>
+        </div>
+        <button class="user-chip" id="profile-shortcut" type="button" title="Open settings">
+          <span class="avatar" id="user-avatar">K</span>
+          <span id="user-name">Kevin</span>
+        </button>
+      </header>
+
+
+      <div id="app-progress" class="app-progress hidden" role="status" aria-live="polite">
+        <div class="progress-track" aria-hidden="true"><span></span></div>
+        <span id="app-progress-label">Updating portfolio...</span>
+      </div>
+
+
+      <div class="content-row">
+        <main class="center-content">
+          <section id="dashboard-page" class="page">
+            <div id="dashboard-empty" class="dashboard-empty hidden">
+              <span class="empty-state-icon" aria-hidden="true"><i data-lucide="folder-up"></i></span>
+              <div>
+                <h2>Import your first portfolio</h2>
+                <p>Add a CSV, spreadsheet, or portfolio image to generate performance and risk insights.</p>
+              </div>
+              <button class="primary-btn" type="button" data-page="ingest-page">Import Portfolio</button>
+            </div>
+
+
+            <div id="dashboard-content">
+              <div class="metrics-row">
+              <div class="metric-card">
+                <div class="metric-label">Current Value</div>
+                <div class="metric-value" id="metric-total">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">1-Year Return</div>
+                <div class="metric-value green" id="metric-ytd">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Total Return</div>
+                <div class="metric-value green" id="metric-overall">--</div>
+              </div>
+            </div>
+
+
+            <div class="panel chart-panel">
+              <div class="panel-heading chart-heading">
+                <div>
+                  <h3>Portfolio Performance</h3>
+                  <span id="performance-period-label" class="panel-meta">Past year</span>
+                </div>
+                <div class="range-control" role="group" aria-label="Performance period">
+                  <button type="button" data-chart-range="1M" aria-pressed="false">1M</button>
+                  <button type="button" data-chart-range="3M" aria-pressed="false">3M</button>
+                  <button class="active" type="button" data-chart-range="1Y" aria-pressed="true">1Y</button>
+                  <button type="button" data-chart-range="ALL" aria-pressed="false">All</button>
+                </div>
+              </div>
+              <div class="chart-frame">
+                <canvas id="history-chart" aria-label="Portfolio value history chart"></canvas>
+              </div>
+            </div>
+
+
+            <div class="panel">
+              <div class="panel-heading">
+                <h3>Holdings</h3>
+                <span id="holdings-count" class="panel-meta"></span>
+              </div>
+              <div class="table-wrap">
+                <table id="holdings-table">
+                  <thead>
+                    <tr>
+                      <th>Ticker</th>
+                      <th>Name</th>
+                      <th>Shares</th>
+                      <th>Price</th>
+                      <th>Value</th>
+                      <th>Gain/Loss</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            </div>
+          </section>
+
+
+          <section id="ingest-page" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <h2>Import Portfolio</h2>
+                <p>Import a portfolio file and prepare it for analysis.</p>
+              </div>
+              <span class="status-badge" id="api-status">Demo data</span>
+            </div>
+
+
+            <div class="panel upload-panel">
+              <input
+                id="portfolio-file"
+                class="visually-hidden-input"
+                type="file"
+                accept=".csv,.xls,.xlsx,.png,.jpg,.jpeg,.webp"
+              />
+              <div id="drop-zone" class="drop-zone" role="button" tabindex="0">
+                <span class="upload-icon" aria-hidden="true"><i data-lucide="upload"></i></span>
+                <strong>Drop your portfolio file here</strong>
+                <span>CSV, Excel, PNG, JPG, or WebP</span>
+                <button id="choose-file" class="secondary-btn" type="button">Choose File</button>
+              </div>
+
+
+              <div id="file-summary" class="file-summary hidden" aria-live="polite">
+                <div>
+                  <strong id="file-name"></strong>
+                  <span id="file-size"></span>
+                </div>
+                <button id="clear-file" class="icon-btn" type="button" title="Clear selected file" aria-label="Clear selected file">&times;</button>
+              </div>
+
+
+              <div class="action-row">
+                <button id="analyze-file" class="primary-btn" type="button" disabled>Analyze Portfolio</button>
+                <button id="use-sample" class="secondary-btn" type="button">Use Sample Data</button>
+                <button id="remove-portfolio" class="danger-btn" type="button">Remove Portfolio</button>
+              </div>
+              <p id="upload-status" class="inline-status" role="status"></p>
+            </div>
+
+
+            <div id="ingest-results" class="panel hidden">
+              <div class="panel-heading">
+                <h3>Extracted Holdings</h3>
+                <span id="ingest-count" class="panel-meta"></span>
+              </div>
+              <div class="table-wrap">
+                <table id="ingest-table">
+                  <thead>
+                    <tr>
+                      <th>Ticker</th>
+                      <th>Company</th>
+                      <th>Shares</th>
+                      <th>Current Value</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+
+          <section id="valuation-page" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <h2>Portfolio Analysis</h2>
+                <p>Review growth, diversification, concentration, and risk.</p>
+              </div>
+            </div>
+
+
+            <div id="valuation-empty" class="panel empty-state hidden">
+              <h3>No portfolio available</h3>
+              <p>Import a portfolio to generate performance, diversification, and risk analysis.</p>
+              <button class="primary-btn page-link" type="button" data-page="ingest-page">Import Portfolio</button>
+            </div>
+
+
+            <div id="valuation-content">
+              <div class="metrics-row analysis-metrics">
+                <div class="metric-card">
+                  <div class="metric-label">Diversification</div>
+                  <div class="metric-value" id="diversification-score">--</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Risk Level</div>
+                  <div class="metric-value" id="risk-level">--</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Largest Position</div>
+                  <div class="metric-value" id="largest-position">--</div>
+                </div>
+              </div>
+
+
+              <div class="valuation-grid">
+                <div class="panel sector-panel">
+                  <h3>Sector Allocation</h3>
+                  <div class="sector-chart-frame">
+                    <canvas id="sector-chart" aria-label="Portfolio sector allocation chart"></canvas>
+                  </div>
+                </div>
+                <div class="panel observations-panel">
+                  <h3>Portfolio Insights</h3>
+                  <ul id="observations-list" class="observation-list"></ul>
+                </div>
+              </div>
+
+
+              <div id="concentration-warning" class="warning-panel" role="status"></div>
+            </div>
+          </section>
+
+
+          <section id="reports-page" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <h2>Reports</h2>
+                <p>Review or export a snapshot of your current portfolio.</p>
+              </div>
+            </div>
+
+
+            <div id="reports-empty" class="panel empty-state hidden">
+              <h3>No report to generate</h3>
+              <p>Import a portfolio first, then return here to export it.</p>
+              <button class="primary-btn page-link" type="button" data-page="ingest-page">Import Portfolio</button>
+            </div>
+
+
+            <div id="reports-content">
+              <div class="panel report-toolbar">
+                <div>
+                  <h3>Portfolio Summary</h3>
+                  <p id="report-generated">Ready to export</p>
+                </div>
+                <div class="action-row report-actions">
+                  <button id="download-csv" class="secondary-btn" type="button">Download CSV</button>
+                  <button id="download-summary" class="primary-btn" type="button">Download Summary</button>
+                  <button id="print-report" class="secondary-btn" type="button">Print</button>
+                </div>
+              </div>
+
+
+              <div class="report-summary-grid">
+                <div class="summary-item"><span>Total value</span><strong id="report-value">--</strong></div>
+                <div class="summary-item"><span>Holdings</span><strong id="report-holdings">--</strong></div>
+                <div class="summary-item"><span>Risk</span><strong id="report-risk">--</strong></div>
+                <div class="summary-item"><span>Diversification</span><strong id="report-diversification">--</strong></div>
+              </div>
+
+
+              <div class="panel">
+                <h3>Report Notes</h3>
+                <ul id="report-notes" class="observation-list"></ul>
+              </div>
+            </div>
+          </section>
+
+
+          <section id="support-page" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <h2>Live Support</h2>
+                <p>Prepare a secure handoff to a Portfolio IQ support specialist.</p>
+              </div>
+              <span class="status-badge service-preview">Preview mode</span>
+            </div>
+
+
+            <div class="support-intro">
+              <div class="support-person" aria-hidden="true"><i data-lucide="headphones"></i></div>
+              <div class="support-intro-copy">
+                <span class="support-kicker">Human support</span>
+                <h3>Get help from a real person</h3>
+                <p>Choose a topic, describe the issue, and decide exactly what information can be shared.</p>
+              </div>
+              <div class="service-state" id="agent-service-state">
+                <span aria-hidden="true"></span>
+                Not connected yet
+              </div>
+            </div>
+
+
+            <div class="support-grid">
+              <form id="support-form" class="panel support-form">
+                <h3>Start a Support Request</h3>
+
+
+                <label class="field-label" for="support-topic">What do you need help with?</label>
+                <select id="support-topic" required>
+                  <option value="" selected disabled>Choose a support topic</option>
+                  <option value="Portfolio import">Portfolio import</option>
+                  <option value="Analysis or report">Analysis or report</option>
+                  <option value="AI assistant">AI assistant</option>
+                  <option value="Account access">Account access</option>
+                  <option value="Technical issue">Technical issue</option>
+                  <option value="Other">Other</option>
+                </select>
+
+
+                <label class="field-label" for="support-message">Describe the issue</label>
+                <textarea
+                  id="support-message"
+                  rows="6"
+                  maxlength="800"
+                  placeholder="Tell the specialist what happened and what you were trying to do."
+                  required
+                ></textarea>
+                <div class="field-meta"><span>Do not include passwords or account credentials.</span><span id="support-character-count">0/800</span></div>
+
+
+                <fieldset class="support-consent-group">
+                  <legend>Information to include</legend>
+                  <p>Your request message is always included. The items below are optional.</p>
+
+
+                  <label class="consent-row" for="support-share-portfolio">
+                    <input id="support-share-portfolio" type="checkbox" checked />
+                    <span>
+                      <strong>Portfolio summary</strong>
+                      <small>Holdings, value, diversification, and risk level.</small>
+                    </span>
+                  </label>
+
+
+                  <label class="consent-row" for="support-share-chat">
+                    <input id="support-share-chat" type="checkbox" />
+                    <span>
+                      <strong>Assistant conversation</strong>
+                      <small>Your current Portfolio IQ Assistant message history.</small>
+                    </span>
+                  </label>
+                </fieldset>
+
+
+                <label class="consent-row required-consent" for="support-consent">
+                  <input id="support-consent" type="checkbox" required />
+                  <span>
+                    <strong>I consent to this support handoff</strong>
+                    <small>A specialist may review the request and any information selected above.</small>
+                  </span>
+                </label>
+
+
+                <button id="prepare-support-request" class="primary-btn" type="submit">Prepare Live Support Request</button>
+                <p id="support-form-status" class="inline-status" role="status" aria-live="polite"></p>
+              </form>
+
+
+              <aside class="panel support-details" aria-label="Live support information">
+                <h3>Secure Support</h3>
+
+
+                <div class="support-security-warning">
+                  <strong>Keep credentials private</strong>
+                  <p>A Portfolio IQ specialist will never ask for your password, PIN, two-factor code, bank login, Social Security number, or full card number.</p>
+                </div>
+
+
+                <div class="support-help-list">
+                  <h4>Specialists can help with</h4>
+                  <ul>
+                    <li>Portfolio imports and missing data</li>
+                    <li>Understanding product features and reports</li>
+                    <li>Account access and technical problems</li>
+                    <li>Escalating unresolved product issues</li>
+                  </ul>
+                </div>
+
+
+                <div id="support-request-summary" class="request-summary hidden">
+                  <div class="request-summary-heading">
+                    <h4>Saved Request</h4>
+                    <span>Local draft</span>
+                  </div>
+                  <dl>
+                    <div><dt>Topic</dt><dd id="support-summary-topic">--</dd></div>
+                    <div><dt>Created</dt><dd id="support-summary-time">--</dd></div>
+                  </dl>
+                  <p id="support-share-summary"></p>
+                  <button id="clear-support-draft" class="secondary-btn" type="button">Clear Draft</button>
+                </div>
+
+
+                <p class="support-boundary">Support specialists can explain Portfolio IQ and troubleshoot the service, but they do not provide personalized investment advice.</p>
+              </aside>
+            </div>
+          </section>
+
+
+          <section id="settings-page" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <h2>Settings</h2>
+                <p>Manage display, privacy, and development-session preferences.</p>
+              </div>
+            </div>
+
+
+            <form id="settings-form" class="panel settings-form">
+              <h3>Profile</h3>
+              <label class="field-label" for="display-name">Display name</label>
+              <input id="display-name" type="text" value="Kevin" maxlength="40" />
+
+
+              <label class="checkbox-row" for="share-portfolio">
+                <input id="share-portfolio" type="checkbox" checked />
+                <span>
+                  <strong>Share portfolio context with Portfolio IQ Assistant</strong>
+                  <small>Turn this off to ask general finance questions without sending holdings.</small>
+                </span>
+              </label>
+
+
+              <button class="primary-btn" type="submit">Save Settings</button>
+            </form>
+
+
+            <div class="panel session-panel">
+              <div>
+                <h3>Development Session</h3>
+                <p>Password verification and live backend requests are disabled while mock mode is active.</p>
+              </div>
+              <div class="action-row">
+                <button id="restore-sample" class="secondary-btn" type="button">Restore Sample Data</button>
+                <button id="sign-out" class="danger-btn" type="button">Sign Out</button>
+              </div>
+            </div>
+
+
+            <div class="privacy-panel">
+              <strong>Protect your information</strong>
+              <p>Never submit passwords, Social Security numbers, bank logins, or card numbers in uploads or chat.</p>
+            </div>
+          </section>
+        </main>
+
+
+        <aside id="assistant-panel" class="chat-panel" aria-label="Portfolio IQ Assistant">
+          <div class="chat-header">
+            <div class="assistant-identity">
+              <span class="assistant-mark" aria-hidden="true">IQ</span>
+              <span>
+                <strong>Portfolio IQ Assistant</strong>
+                <small>AI-powered guidance</small>
+              </span>
+            </div>
+            <div class="assistant-header-actions">
+              <span class="assistant-badge">AI</span>
+              <button
+                id="assistant-toggle"
+                class="assistant-toggle"
+                type="button"
+                aria-expanded="true"
+                aria-label="Collapse Portfolio IQ Assistant"
+                title="Collapse assistant"
+              >
+                <i data-lucide="panel-right-close" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="chat-mode-tabs" role="group" aria-label="Chat mode">
+            <button class="chat-mode active" type="button" data-chat-mode="portfolio">My Portfolio</button>
+            <button class="chat-mode" type="button" data-chat-mode="general">General</button>
+          </div>
+          <div class="assistant-context">
+            <i data-lucide="shield-check" aria-hidden="true"></i>
+            <span id="assistant-context-text">Using 4 holdings from demo data</span>
+          </div>
+          <div id="chat-suggestions" class="chat-suggestions" aria-label="Suggested questions"></div>
+          <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+          <div class="chat-handoff">
+            <span>Need help from a person?</span>
+            <button id="open-live-support" type="button" data-page="support-page">Live Support</button>
+          </div>
+          <p class="chat-disclaimer">AI responses may be inaccurate. Educational information only, not financial advice.</p>
+          <div class="chat-input-row">
+            <label class="sr-only" for="chat-input">Ask the financial assistant</label>
+            <input id="chat-input" type="text" placeholder="Ask about your portfolio..." autocomplete="off" />
+            <button id="chat-send" type="button">Send</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="drawer-backdrop" class="drawer-backdrop hidden" aria-hidden="true"></div>
+  <aside
+    id="holding-drawer"
+    class="holding-drawer hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="drawer-name"
+    tabindex="-1"
+  >
+    <header class="drawer-header">
+      <div>
+        <span class="drawer-eyebrow">Holding details</span>
+        <h2 id="drawer-name">Company name</h2>
+      </div>
+      <button id="close-holding-drawer" class="icon-btn" type="button" aria-label="Close holding details" title="Close">
+        <i data-lucide="x" aria-hidden="true"></i>
+      </button>
+    </header>
+
+
+    <div class="drawer-body">
+      <div class="holding-identity">
+        <span id="drawer-ticker" class="ticker-badge">--</span>
+        <div>
+          <span id="drawer-price" class="holding-price">--</span>
+          <span class="holding-price-label">Current price</span>
+        </div>
+      </div>
+
+
+      <dl class="holding-detail-grid">
+        <div><dt>Market value</dt><dd id="drawer-value">--</dd></div>
+        <div><dt>Portfolio allocation</dt><dd id="drawer-allocation">--</dd></div>
+        <div><dt>Shares</dt><dd id="drawer-shares">--</dd></div>
+        <div><dt>Estimated cost basis</dt><dd id="drawer-cost-basis">--</dd></div>
+        <div><dt>Total return</dt><dd id="drawer-return">--</dd></div>
+        <div><dt>Sector</dt><dd id="drawer-sector">--</dd></div>
+      </dl>
+
+
+      <section class="allocation-section" aria-labelledby="allocation-title">
+        <div><h3 id="allocation-title">Portfolio weight</h3><span id="drawer-allocation-label">--</span></div>
+        <div class="allocation-track" aria-hidden="true"><span id="drawer-allocation-bar"></span></div>
+      </section>
+
+
+      <section class="holding-context" aria-labelledby="holding-context-title">
+        <h3 id="holding-context-title">Portfolio context</h3>
+        <p id="drawer-insight"></p>
+      </section>
+    </div>
+  </aside>
+
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+
+  <script src="https://unpkg.com/lucide@1.23.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
