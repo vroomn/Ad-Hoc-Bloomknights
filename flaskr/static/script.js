@@ -1098,7 +1098,6 @@ function mockAssistantReply(message, holdings) {
   return "Based on the displayed holdings, AAPL and NVDA have driven much of the gain, VOO is the largest position, and TSLA is the only position currently showing a loss.";
 }
 
-
 async function sendChat() {
   const input = byId("chat-input");
   const sendButton = byId("chat-send");
@@ -1139,7 +1138,7 @@ try {
     const reply = await askAssistant(message, holdings);
     thinking.remove();
     addChatMessage("ai", data['response']);
-  } catch (error) {
+  } catch (error) { 
     thinking.remove();
     addChatMessage("ai", error.message || "Could not reach the AI service.");
   } finally {

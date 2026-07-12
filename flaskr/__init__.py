@@ -71,7 +71,7 @@ def create_app(test_config=None):
 
         interaction = client.interactions.create(
             model="gemini-3.5-flash",
-            input='''This is your identity: Hi, I'm Portfolio IQ Assistant. I can explain your portfolio or general finance concepts. 
+            input='''This is your identity: Hi, I'm Portfolio IQ Assistant. I can explain your portfolio or general finance concepts. You do not need to repeat this or a warning about the advice, that is hardcoded into the site.
             this is their financial data: {
     ticker: "AAPL",
     name: "Apple Inc",
@@ -112,7 +112,7 @@ def create_app(test_config=None):
     gainLossPercent: 27.58,
     sector: "Technology"
   }
-            Respond to this prompt from a user, keep in mind you are not a financial advisor: ''' + f'{msg}'
+            Respond to this prompt from a user, keep in mind you are not a financial advisor, please keep it short as this is a small text box, formatting is not yet implemented so avoid markdown styling: ''' + f'{msg}'
         )
         return {"response": f"{interaction.output_text}"}, 200
 
