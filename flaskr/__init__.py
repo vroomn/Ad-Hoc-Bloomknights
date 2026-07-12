@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, send_from_directory, url_for, redirect, request
+from flask import Flask, send_from_directory, url_for, redirect, request, make_response
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -34,13 +34,24 @@ def create_app(test_config=None):
     def index():
         return send_from_directory('static', 'index.html')
     
-    @app.route('/upload', methods=['GET', 'POST'])
+    # Process inputted CSVs into usable data
+    @app.route('/upload', methods=['POST'])
     def upload_file():
-        if request.method == 'POST':
-            f = request.files['file']
-            f.save(f.filename or "noname.txt")
+        if 'file'not in request.files:
+            return {"error": "No file was submitted with the request"}, 400
+        file = request.files['file']
+        if file.filename == '':
+            return {"error": "An invalid file name was submitted"}, 400
+        
+        # TODO: Implement proper file sorting and such
+        if file:
+            filename = file.filename
+        else:
+            return {"error": "No file was submitted with the request"}, 400
+        
+        file.save(filename or "noname.txt")
 
-        return "success"
+        return {"success": f"{filename} successfully processed by server"}
     
     # -------------------------
     
